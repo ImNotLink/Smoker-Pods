@@ -4,7 +4,7 @@ import { useState } from 'react'
 
 // ⚠️  SUBSTITUA pelo número real com DDI+DDD (sem espaços ou hífen)
 // Exemplo: Brasil, DDD 11 → '5511987654321'
-const WHATSAPP_NUMBER = '5511999999999'
+const WHATSAPP_NUMBER = '559991036173'
 
 const PAYMENT_OPTIONS = ['PIX', 'Dinheiro', 'Cartão de Crédito', 'Cartão de Débito']
 const HOW_FOUND_OPTIONS = ['Instagram', 'Indicação de amigo', 'Google', 'TikTok', 'Facebook', 'Outro']
