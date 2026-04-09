@@ -1,33 +1,30 @@
-import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs'
 import { NextResponse } from 'next/server'
 
 export async function middleware(req) {
-  const res = NextResponse.next()
-  const supabase = createMiddlewareClient({ req, res })
+  const { pathname } = req.nextUrl
 
-  // Refresh session — isso também grava o cookie atualizado na resposta
-  const {
-    data: { session },
-  } = await supabase.auth.getSession()
+  const isAdminRoute = pathname.startsWith('/admin')
+  const isLoginPage = pathname === '/login'
 
-  const isAdminRoute = req.nextUrl.pathname.startsWith('/admin')
-  const isLoginPage = req.nextUrl.pathname === '/login'
+  if (!isAdminRoute && !isLoginPage) return NextResponse.next()
 
-  // Sem sessão tentando acessar /admin → vai para login
-  if (isAdminRoute && !session) {
+  // Lê o cookie de sessão do Supabase diretamente
+  const cookieHeader = req.headers.get('cookie') || ''
+  const hasSession = cookieHeader.includes('sb-') && cookieHeader.includes('-auth-token')
+
+  if (isAdminRoute && !hasSession) {
     const url = req.nextUrl.clone()
     url.pathname = '/login'
     return NextResponse.redirect(url)
   }
 
-  // Com sessão tentando acessar /login → vai para admin
-  if (isLoginPage && session) {
+  if (isLoginPage && hasSession) {
     const url = req.nextUrl.clone()
     url.pathname = '/admin'
     return NextResponse.redirect(url)
   }
 
-  return res
+  return NextResponse.next()
 }
 
 export const config = {
