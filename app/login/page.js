@@ -1,17 +1,25 @@
 'use client'
 
-import { useState, Suspense } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useState, useEffect, Suspense } from 'react'
 import { supabase } from '@/lib/supabase'
 
 function LoginForm() {
-  const searchParams = useSearchParams()
-  const redirect = searchParams.get('redirect') || '/admin'
-
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
+  const [checking, setChecking] = useState(true)
   const [error, setError] = useState('')
+
+  // Se já tiver sessão ativa, vai direto pro admin
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        window.location.replace('/admin')
+      } else {
+        setChecking(false)
+      }
+    })
+  }, [])
 
   async function handleLogin(e) {
     e.preventDefault()
@@ -24,18 +32,25 @@ function LoginForm() {
     })
 
     if (authError) {
-      setError('Credenciais inválidas. Tente novamente.')
+      setError('E-mail ou senha incorretos.')
       setLoading(false)
       return
     }
 
     if (data?.session) {
-      // window.location garante que o middleware relê o cookie antes de carregar /admin
-      window.location.href = redirect
+      window.location.replace('/admin')
     } else {
-      setError('Não foi possível iniciar a sessão. Tente novamente.')
+      setError('Sessão não iniciada. Tente novamente.')
       setLoading(false)
     }
+  }
+
+  if (checking) {
+    return (
+      <main className="min-h-screen flex items-center justify-center" style={{ background: '#050505' }}>
+        <div className="w-6 h-6 rounded-full border-2 border-t-transparent animate-spin" style={{ borderColor: 'rgba(168,85,247,0.4)', borderTopColor: '#a855f7' }} />
+      </main>
+    )
   }
 
   return (
@@ -46,8 +61,7 @@ function LoginForm() {
       <div
         className="fixed inset-0 pointer-events-none"
         style={{
-          background:
-            'radial-gradient(ellipse 70% 50% at 50% 50%, rgba(139,92,246,0.13) 0%, transparent 70%)',
+          background: 'radial-gradient(ellipse 70% 50% at 50% 50%, rgba(139,92,246,0.13) 0%, transparent 70%)',
         }}
       />
 
@@ -71,10 +85,7 @@ function LoginForm() {
                   </linearGradient>
                 </defs>
               </svg>
-              <span
-                className="text-2xl font-black tracking-tight text-white"
-                style={{ letterSpacing: '-0.02em' }}
-              >
+              <span className="text-2xl font-black tracking-tight text-white" style={{ letterSpacing: '-0.02em' }}>
                 Smoker<span style={{ color: '#a855f7' }}>Pods</span>
               </span>
             </div>
@@ -91,7 +102,7 @@ function LoginForm() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="admin@smokerpods.com"
+                placeholder="seu@email.com"
                 className="w-full px-4 py-3 rounded-xl text-white text-sm placeholder-white/20 outline-none border border-white/[0.08] focus:border-purple-500/50 transition-colors"
                 style={{ background: 'rgba(255,255,255,0.05)' }}
               />
@@ -127,7 +138,6 @@ function LoginForm() {
               className="w-full py-3.5 rounded-xl font-bold text-white text-sm tracking-wide transition-all hover:brightness-110 active:scale-[0.98] disabled:opacity-50"
               style={{
                 background: 'linear-gradient(135deg, #7c3aed, #a855f7, #ec4899)',
-                backgroundSize: '200% 200%',
                 boxShadow: '0 0 30px rgba(168,85,247,0.3)',
               }}
             >

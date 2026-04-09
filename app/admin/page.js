@@ -253,12 +253,33 @@ export default function AdminPage() {
   const router = useRouter()
   const [pods, setPods] = useState([])
   const [loading, setLoading] = useState(true)
+  const [authChecked, setAuthChecked] = useState(false)
   const [saving, setSaving] = useState(false)
   const [editTarget, setEditTarget] = useState(null)   // null=closed | {}=new | pod=edit
   const [delTarget, setDelTarget] = useState(null)
   const [search, setSearch] = useState('')
 
-  useEffect(() => { fetchPods() }, [])
+  // ── Proteção client-side: verifica sessão antes de mostrar qualquer coisa ──
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) {
+        window.location.replace('/login')
+      } else {
+        setAuthChecked(true)
+        fetchPods()
+      }
+    })
+  }, [])
+
+  // Escuta mudanças de auth (ex: token expirado)
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT' || !session) {
+        window.location.replace('/login')
+      }
+    })
+    return () => subscription.unsubscribe()
+  }, [])
 
   async function fetchPods() {
     const { data } = await supabase.from('pods').select('*').order('created_at', { ascending: false })
@@ -320,6 +341,19 @@ export default function AdminPage() {
     { label: 'Promoções',  val: pods.filter(p => p.on_sale).length,           color: '#f59e0b' },
     { label: 'Esgotados',  val: pods.filter(p => p.stock_qty === 0).length,   color: '#ef4444' },
   ]
+
+  // Não renderiza nada até confirmar autenticação
+  if (!authChecked) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ background: '#050505' }}>
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-8 h-8 rounded-full border-2 border-t-transparent animate-spin"
+            style={{ borderColor: 'rgba(168,85,247,0.3)', borderTopColor: '#a855f7' }} />
+          <p className="text-white/30 text-sm">Verificando acesso...</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen flex" style={{ background: '#050505' }}>
