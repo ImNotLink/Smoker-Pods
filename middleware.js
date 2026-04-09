@@ -1,4 +1,3 @@
-// middleware.js
 import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs'
 import { NextResponse } from 'next/server'
 
@@ -6,21 +5,22 @@ export async function middleware(req) {
   const res = NextResponse.next()
   const supabase = createMiddlewareClient({ req, res })
 
-  // Revalida a sessão a cada request (refresh automático do token JWT)
-  const { data: { session } } = await supabase.auth.getSession()
+  // Refresh session — isso também grava o cookie atualizado na resposta
+  const {
+    data: { session },
+  } = await supabase.auth.getSession()
 
   const isAdminRoute = req.nextUrl.pathname.startsWith('/admin')
   const isLoginPage = req.nextUrl.pathname === '/login'
 
-  // Protege /admin — redireciona para login se não autenticado
+  // Sem sessão tentando acessar /admin → vai para login
   if (isAdminRoute && !session) {
     const url = req.nextUrl.clone()
     url.pathname = '/login'
-    url.searchParams.set('redirect', req.nextUrl.pathname)
     return NextResponse.redirect(url)
   }
 
-  // Redireciona admin logado que acessa /login
+  // Com sessão tentando acessar /login → vai para admin
   if (isLoginPage && session) {
     const url = req.nextUrl.clone()
     url.pathname = '/admin'

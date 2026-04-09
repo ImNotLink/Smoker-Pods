@@ -1,11 +1,10 @@
 'use client'
 
 import { useState, Suspense } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 
 function LoginForm() {
-  const router = useRouter()
   const searchParams = useSearchParams()
   const redirect = searchParams.get('redirect') || '/admin'
 
@@ -19,17 +18,24 @@ function LoginForm() {
     setLoading(true)
     setError('')
 
-    const { error: authError } = await supabase.auth.signInWithPassword({ email, password })
+    const { data, error: authError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    })
 
     if (authError) {
-      // Mensagem genérica intencional — não revela se o e-mail existe
       setError('Credenciais inválidas. Tente novamente.')
       setLoading(false)
       return
     }
 
-    router.push(redirect)
-    router.refresh()
+    if (data?.session) {
+      // window.location garante que o middleware relê o cookie antes de carregar /admin
+      window.location.href = redirect
+    } else {
+      setError('Não foi possível iniciar a sessão. Tente novamente.')
+      setLoading(false)
+    }
   }
 
   return (
@@ -37,7 +43,6 @@ function LoginForm() {
       className="min-h-screen flex items-center justify-center px-4"
       style={{ background: '#050505' }}
     >
-      {/* Ambient glow */}
       <div
         className="fixed inset-0 pointer-events-none"
         style={{
@@ -47,7 +52,6 @@ function LoginForm() {
       />
 
       <div className="relative w-full max-w-[400px]">
-        {/* Card */}
         <div
           className="rounded-[2rem] p-8 border border-white/[0.07]"
           style={{
@@ -57,7 +61,6 @@ function LoginForm() {
             boxShadow: '0 0 0 1px rgba(255,255,255,0.05) inset, 0 40px 80px rgba(0,0,0,0.6)',
           }}
         >
-          {/* Logo */}
           <div className="text-center mb-8">
             <div className="flex items-center justify-center gap-2 mb-4">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
