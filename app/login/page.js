@@ -76,10 +76,16 @@ function LoginForm() {
           }}
         >
           <div className="text-center mb-8">
-            <div className="flex items-center justify-center gap-2 mb-4">
+            <div className="flex items-center justify-center gap-3 mb-4">
+              <img
+                src="/Logo_pod.png"
+                alt="SmokePods"
+                className="w-10 h-10 object-contain"
+                style={{ filter: 'drop-shadow(0 0 8px rgba(59,130,246,0.6))' }}
+              />
               <span className="text-2xl font-black tracking-tight flex items-center gap-1.5" style={{ letterSpacing: '-0.02em' }}>
                 <span style={{ color: '#9ca3af' }}>Smoke</span><span style={{ color: '#ffffff', textShadow: '0 0 12px #60a5fa, 0 0 24px #3b82f6' }}>Pods</span>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
                   <path d="M13 2L4.5 13.5H11L10 22L19.5 10.5H13L13 2Z" fill="url(#lg1)" />
                   <defs>
                     <linearGradient id="lg1" x1="4.5" y1="2" x2="19.5" y2="22" gradientUnits="userSpaceOnUse">

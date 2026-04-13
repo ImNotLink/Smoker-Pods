@@ -270,6 +270,12 @@ export default function HomePage() {
       >
         {/* Logo */}
         <a href="/" className="flex items-center gap-2 no-underline">
+          <img
+            src="/Logo_pod.png"
+            alt="SmokePods"
+            className="w-8 h-8 object-contain"
+            style={{ filter: 'drop-shadow(0 0 6px rgba(59,130,246,0.5))' }}
+          />
           <span
             className="font-black text-lg tracking-tight flex items-center gap-1.5"
             style={{ letterSpacing: '-0.02em' }}

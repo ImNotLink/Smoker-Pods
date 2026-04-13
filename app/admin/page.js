@@ -368,6 +368,12 @@ export default function AdminPage() {
         }}
       >
         <div className="flex items-center gap-2 px-2 mb-8">
+          <img
+            src="/Logo_pod.png"
+            alt="SmokePods"
+            className="w-7 h-7 object-contain flex-shrink-0"
+            style={{ filter: 'drop-shadow(0 0 5px rgba(59,130,246,0.5))' }}
+          />
           <span className="font-black text-base tracking-tight flex items-center gap-1.5">
             <span style={{ color: '#9ca3af' }}>Smoke</span><span style={{ color: '#ffffff', textShadow: '0 0 12px #60a5fa, 0 0 24px #3b82f6' }}>Pods</span>
             <I.Logo />
