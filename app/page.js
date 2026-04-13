@@ -65,7 +65,7 @@ function ProductCard({ pod, onAddToCart }) {
       <div
         className="relative overflow-hidden"
         style={{
-          background: 'linear-gradient(160deg, #0d0d12 0%, #10101a 100%)',
+          background: 'linear-gradient(160deg, #080c14 0%, #0d1220 100%)',
           minHeight: '260px',
         }}
       >
@@ -73,7 +73,7 @@ function ProductCard({ pod, onAddToCart }) {
         {pod.on_sale && (
           <div
             className="absolute top-3 left-3 z-10 px-3 py-1 rounded-full text-xs font-bold text-white"
-            style={{ background: 'linear-gradient(135deg, #7c3aed, #a855f7)' }}
+            style={{ background: 'linear-gradient(135deg, #1d4ed8, #3b82f6)' }}
           >
             PROMOÇÃO
           </div>
@@ -104,11 +104,11 @@ function ProductCard({ pod, onAddToCart }) {
               src={pod.image_url}
               alt={pod.name}
               className="h-full w-auto max-h-[220px] object-contain transition-transform duration-500 group-hover:scale-105"
-              style={{ filter: isOut ? 'grayscale(70%) opacity(0.5)' : 'drop-shadow(0 20px 40px rgba(139,92,246,0.25))' }}
+              style={{ filter: isOut ? 'grayscale(70%) opacity(0.5)' : 'drop-shadow(0 20px 40px rgba(59,130,246,0.2))' }}
             />
           ) : (
             <div className="w-32 h-32 rounded-3xl flex items-center justify-center text-purple-400/20 text-5xl"
-              style={{ background: 'rgba(139,92,246,0.05)' }}>
+              style={{ background: 'rgba(59,130,246,0.05)' }}>
               🌫️
             </div>
           )}
@@ -124,7 +124,7 @@ function ProductCard({ pod, onAddToCart }) {
         <div className="flex items-baseline gap-2">
           <span
             className="text-2xl font-black"
-            style={{ color: '#a855f7' }}
+            style={{ color: '#3b82f6' }}
           >
             R$ {price.toFixed(2).replace('.', ',')}
           </span>
@@ -144,11 +144,11 @@ function ProductCard({ pod, onAddToCart }) {
               disabled={isOut}
               className="px-3 py-1 rounded-full text-xs transition-all"
               style={{
-                background: selectedFlavor === f ? 'rgba(168,85,247,0.2)' : 'transparent',
+                background: selectedFlavor === f ? 'rgba(59,130,246,0.15)' : 'transparent',
                 border: selectedFlavor === f
-                  ? '1px solid rgba(168,85,247,0.6)'
+                  ? '1px solid rgba(59,130,246,0.7)'
                   : '1px solid rgba(255,255,255,0.12)',
-                color: selectedFlavor === f ? '#c084fc' : 'rgba(255,255,255,0.5)',
+                color: selectedFlavor === f ? '#60a5fa' : 'rgba(255,255,255,0.5)',
                 cursor: isOut ? 'default' : 'pointer',
               }}
             >
@@ -192,8 +192,8 @@ function ProductCard({ pod, onAddToCart }) {
                 ? 'rgba(255,255,255,0.05)'
                 : added
                   ? 'linear-gradient(135deg, #22c55e, #16a34a)'
-                  : 'linear-gradient(135deg, #7c3aed, #a855f7, #ec4899)',
-              boxShadow: (!isOut && !added) ? '0 0 20px rgba(168,85,247,0.3)' : 'none',
+                  : 'linear-gradient(135deg, #1d4ed8, #3b82f6, #60a5fa)',
+              boxShadow: (!isOut && !added) ? '0 0 20px rgba(59,130,246,0.3)' : 'none',
             }}
           >
             <CartIcon size={16} />
@@ -265,7 +265,7 @@ export default function HomePage() {
           background: 'rgba(5,5,5,0.85)',
           backdropFilter: 'blur(20px)',
           WebkitBackdropFilter: 'blur(20px)',
-          borderBottom: '1px solid rgba(255,255,255,0.06)',
+          borderBottom: '1px solid rgba(255,255,255,0.08)',
         }}
       >
         {/* Logo */}
@@ -304,7 +304,7 @@ export default function HomePage() {
             {cartCount > 0 && (
               <span
                 className="absolute -top-2 -right-2 w-5 h-5 rounded-full text-xs font-black text-white flex items-center justify-center"
-                style={{ background: 'linear-gradient(135deg, #7c3aed, #a855f7)' }}
+                style={{ background: 'linear-gradient(135deg, #1d4ed8, #3b82f6)' }}
               >
                 {cartCount}
               </span>
@@ -323,7 +323,7 @@ export default function HomePage() {
           className="w-full max-w-xs px-4 py-2.5 rounded-xl text-white text-sm placeholder-white/20 outline-none transition-colors"
           style={{
             background: 'rgba(255,255,255,0.05)',
-            border: '1px solid rgba(255,255,255,0.09)',
+            border: '1px solid rgba(255,255,255,0.12)',
           }}
         />
       </div>
@@ -334,7 +334,7 @@ export default function HomePage() {
           <div className="flex items-center justify-center h-64">
             <div
               className="w-8 h-8 rounded-full border-2 border-t-transparent animate-spin"
-              style={{ borderColor: 'rgba(168,85,247,0.4)', borderTopColor: '#a855f7' }}
+              style={{ borderColor: 'rgba(59,130,246,0.4)', borderTopColor: '#3b82f6' }}
             />
           </div>
         ) : filtered.length === 0 ? (

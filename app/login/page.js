@@ -61,7 +61,7 @@ function LoginForm() {
       <div
         className="fixed inset-0 pointer-events-none"
         style={{
-          background: 'radial-gradient(ellipse 70% 50% at 50% 50%, rgba(139,92,246,0.13) 0%, transparent 70%)',
+          background: 'radial-gradient(ellipse 70% 50% at 50% 50%, rgba(29,78,216,0.15) 0%, transparent 70%)',
         }}
       />
 
@@ -103,7 +103,7 @@ function LoginForm() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="seu@email.com"
-                className="w-full px-4 py-3 rounded-xl text-white text-sm placeholder-white/20 outline-none border border-white/[0.08] focus:border-purple-500/50 transition-colors"
+                className="w-full px-4 py-3 rounded-xl text-white text-sm placeholder-white/20 outline-none border border-white/[0.08] focus:border-blue-500/50 transition-colors"
                 style={{ background: 'rgba(255,255,255,0.05)' }}
               />
             </div>
@@ -118,7 +118,7 @@ function LoginForm() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full px-4 py-3 rounded-xl text-white text-sm placeholder-white/20 outline-none border border-white/[0.08] focus:border-purple-500/50 transition-colors"
+                className="w-full px-4 py-3 rounded-xl text-white text-sm placeholder-white/20 outline-none border border-white/[0.08] focus:border-blue-500/50 transition-colors"
                 style={{ background: 'rgba(255,255,255,0.05)' }}
               />
             </div>
@@ -137,8 +137,8 @@ function LoginForm() {
               disabled={loading}
               className="w-full py-3.5 rounded-xl font-bold text-white text-sm tracking-wide transition-all hover:brightness-110 active:scale-[0.98] disabled:opacity-50"
               style={{
-                background: 'linear-gradient(135deg, #7c3aed, #a855f7, #ec4899)',
-                boxShadow: '0 0 30px rgba(168,85,247,0.3)',
+                background: 'linear-gradient(135deg, #1d4ed8, #3b82f6, #60a5fa)',
+                boxShadow: '0 0 30px rgba(59,130,246,0.3)',
               }}
             >
               {loading ? 'Autenticando...' : 'Entrar'}

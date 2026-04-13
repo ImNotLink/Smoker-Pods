@@ -60,7 +60,7 @@ export default function Cart({ open, onClose, items, setItems }) {
     if (items.length === 0) { setFormError('Seu carrinho está vazio.'); return }
 
     const lines = [
-      '🛒 *Novo Pedido — Smoker Pods*',
+'🛒 *Novo Pedido — SmokePods*',
       '',
       '*Itens:*',
       ...items.map((i, n) =>

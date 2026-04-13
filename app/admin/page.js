@@ -19,7 +19,7 @@ const I = {
 const EMPTY = { name: '', price: '', promo_price: '', on_sale: false, stock_qty: '', image_url: '', flavors: [] }
 
 // ─── UI helpers ────────────────────────────────────────────────────────────────
-const inputCls = 'w-full px-4 py-2.5 rounded-xl text-white text-sm outline-none transition-colors border border-white/[0.08] focus:border-purple-500/50 placeholder-white/20'
+const inputCls = 'w-full px-4 py-2.5 rounded-xl text-white text-sm outline-none transition-colors border border-white/[0.08] focus:border-blue-500/50 placeholder-white/20'
 const inputStyle = { background: 'rgba(255,255,255,0.05)' }
 const labelCls = 'block text-white/35 text-xs font-semibold uppercase tracking-widest mb-1.5'
 
@@ -38,7 +38,7 @@ function Modal({ open, onClose, title, children }) {
         style={{
           background: 'rgba(11,11,15,0.98)',
           border: '1px solid rgba(255,255,255,0.09)',
-          boxShadow: '0 0 100px rgba(139,92,246,0.2)',
+          boxShadow: '0 0 100px rgba(59,130,246,0.2)',
         }}
       >
         <div className="flex items-center justify-between mb-6">
@@ -107,7 +107,7 @@ function ProductForm({ initial, onSave, onCancel, saving }) {
           className="relative h-44 rounded-2xl flex items-center justify-center cursor-pointer overflow-hidden transition-all"
           style={{
             border: '2px dashed rgba(255,255,255,0.12)',
-            background: 'rgba(139,92,246,0.04)',
+            background: 'rgba(59,130,246,0.04)',
           }}
         >
           {preview ? (
@@ -182,9 +182,9 @@ function ProductForm({ initial, onSave, onCancel, saving }) {
             onClick={() => set('on_sale', !f.on_sale)}
             className="w-full h-[42px] rounded-xl text-sm font-semibold transition-all"
             style={{
-              background: f.on_sale ? 'rgba(139,92,246,0.15)' : 'rgba(255,255,255,0.05)',
-              border: f.on_sale ? '1px solid rgba(168,85,247,0.5)' : '1px solid rgba(255,255,255,0.08)',
-              color: f.on_sale ? '#c084fc' : 'rgba(255,255,255,0.35)',
+              background: f.on_sale ? 'rgba(59,130,246,0.15)' : 'rgba(255,255,255,0.05)',
+              border: f.on_sale ? '1px solid rgba(59,130,246,0.5)' : '1px solid rgba(255,255,255,0.08)',
+              color: f.on_sale ? '#93c5fd' : 'rgba(255,255,255,0.35)',
             }}
           >
             {f.on_sale ? '✓ Ativa' : 'Inativa'}
@@ -206,7 +206,7 @@ function ProductForm({ initial, onSave, onCancel, saving }) {
           <button
             type="button" onClick={addFlavor}
             className="px-4 py-2.5 rounded-xl text-white text-sm font-bold transition-all hover:brightness-110"
-            style={{ background: 'linear-gradient(135deg, #7c3aed, #a855f7)' }}
+            style={{ background: 'linear-gradient(135deg, #1d4ed8, #3b82f6)' }}
           >+ Add</button>
         </div>
         {f.flavors.length > 0 && (
@@ -214,14 +214,14 @@ function ProductForm({ initial, onSave, onCancel, saving }) {
             {f.flavors.map((fl) => (
               <span
                 key={fl}
-                className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold text-purple-300"
-                style={{ background: 'rgba(139,92,246,0.12)', border: '1px solid rgba(168,85,247,0.25)' }}
+                className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold text-blue-300"
+                style={{ background: 'rgba(59,130,246,0.12)', border: '1px solid rgba(59,130,246,0.25)' }}
               >
                 {fl}
                 <button
                   type="button"
                   onClick={() => set('flavors', f.flavors.filter((x) => x !== fl))}
-                  className="text-purple-400/40 hover:text-red-400 transition-colors leading-none text-base"
+                  className="text-blue-400/40 hover:text-red-400 transition-colors leading-none text-base"
                 >×</button>
               </span>
             ))}
@@ -239,7 +239,7 @@ function ProductForm({ initial, onSave, onCancel, saving }) {
           type="submit"
           disabled={saving || uploading}
           className="flex-1 py-3 rounded-xl text-sm font-bold text-white transition-all hover:brightness-110 disabled:opacity-50"
-          style={{ background: 'linear-gradient(135deg, #7c3aed, #a855f7, #ec4899)' }}
+          style={{ background: 'linear-gradient(135deg, #1d4ed8, #3b82f6, #60a5fa)' }}
         >
           {(saving || uploading) ? 'Salvando...' : 'Salvar'}
         </button>
@@ -336,7 +336,7 @@ export default function AdminPage() {
   const filtered = pods.filter((p) => p.name.toLowerCase().includes(search.toLowerCase()))
 
   const stats = [
-    { label: 'Produtos',   val: pods.length,                                  color: '#a855f7' },
+    { label: 'Produtos',   val: pods.length,                                  color: '#3b82f6' },
     { label: 'Em Estoque', val: pods.filter(p => p.stock_qty > 0).length,     color: '#22c55e' },
     { label: 'Promoções',  val: pods.filter(p => p.on_sale).length,           color: '#f59e0b' },
     { label: 'Esgotados',  val: pods.filter(p => p.stock_qty === 0).length,   color: '#ef4444' },
@@ -348,7 +348,7 @@ export default function AdminPage() {
       <div className="min-h-screen flex items-center justify-center" style={{ background: '#050505' }}>
         <div className="flex flex-col items-center gap-4">
           <div className="w-8 h-8 rounded-full border-2 border-t-transparent animate-spin"
-            style={{ borderColor: 'rgba(168,85,247,0.3)', borderTopColor: '#a855f7' }} />
+            style={{ borderColor: 'rgba(59,130,246,0.3)', borderTopColor: '#3b82f6' }} />
           <p className="text-white/30 text-sm">Verificando acesso...</p>
         </div>
       </div>
@@ -378,9 +378,9 @@ export default function AdminPage() {
           <div
             className="px-3 py-2.5 rounded-xl text-sm font-semibold"
             style={{
-              background: 'rgba(139,92,246,0.12)',
-              border: '1px solid rgba(168,85,247,0.2)',
-              color: '#c084fc',
+              background: 'rgba(59,130,246,0.12)',
+              border: '1px solid rgba(59,130,246,0.2)',
+              color: '#93c5fd',
             }}
           >
             📦 Produtos
@@ -415,8 +415,8 @@ export default function AdminPage() {
             onClick={() => setEditTarget(EMPTY)}
             className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-white text-sm transition-all hover:brightness-110 active:scale-[0.97]"
             style={{
-              background: 'linear-gradient(135deg, #7c3aed, #a855f7)',
-              boxShadow: '0 0 20px rgba(139,92,246,0.3)',
+              background: 'linear-gradient(135deg, #1d4ed8, #3b82f6)',
+              boxShadow: '0 0 20px rgba(59,130,246,0.3)',
             }}
           >
             <I.Plus /> Novo Produto
@@ -443,7 +443,7 @@ export default function AdminPage() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Buscar produto..."
-          className="w-full max-w-xs px-4 py-2.5 rounded-xl text-white text-sm placeholder-white/20 outline-none border border-white/[0.08] focus:border-purple-500/40 transition-colors mb-5"
+          className="w-full max-w-xs px-4 py-2.5 rounded-xl text-white text-sm placeholder-white/20 outline-none border border-white/[0.08] focus:border-blue-500/40 transition-colors mb-5"
           style={{ background: 'rgba(255,255,255,0.04)' }}
         />
 
@@ -451,7 +451,7 @@ export default function AdminPage() {
         {loading ? (
           <div className="flex items-center justify-center h-40">
             <div className="w-7 h-7 rounded-full border-2 border-t-transparent animate-spin"
-              style={{ borderColor: 'rgba(168,85,247,0.3)', borderTopColor: '#a855f7' }} />
+              style={{ borderColor: 'rgba(59,130,246,0.3)', borderTopColor: '#3b82f6' }} />
           </div>
         ) : (
           <div
@@ -482,11 +482,11 @@ export default function AdminPage() {
                       <div className="flex items-center gap-3">
                         <div
                           className="w-10 h-10 rounded-xl flex-shrink-0 overflow-hidden flex items-center justify-center"
-                          style={{ background: 'rgba(139,92,246,0.07)' }}
+                          style={{ background: 'rgba(59,130,246,0.07)' }}
                         >
                           {pod.image_url
                             ? <img src={pod.image_url} alt="" className="w-full h-full object-contain p-1" />
-                            : <span className="text-purple-400/20 text-lg">📦</span>
+                            : <span className="text-blue-400/20 text-lg">📦</span>
                           }
                         </div>
                         <span className="text-white font-semibold">{pod.name}</span>
@@ -498,8 +498,8 @@ export default function AdminPage() {
                       <div className="flex flex-wrap gap-1">
                         {pod.flavors.slice(0, 2).map((fl) => (
                           <span key={fl}
-                            className="px-2 py-0.5 rounded-full text-xs text-purple-300"
-                            style={{ background: 'rgba(139,92,246,0.1)' }}
+                            className="px-2 py-0.5 rounded-full text-xs text-blue-300"
+                            style={{ background: 'rgba(59,130,246,0.1)' }}
                           >{fl}</span>
                         ))}
                         {pod.flavors.length > 2 && (
@@ -516,7 +516,7 @@ export default function AdminPage() {
                     {/* Promo */}
                     <td className="px-5 py-4">
                       {pod.on_sale && pod.promo_price ? (
-                        <span className="text-purple-400 text-xs font-semibold">
+                        <span className="text-blue-400 text-xs font-semibold">
                           R$ {pod.promo_price.toFixed(2).replace('.', ',')}
                         </span>
                       ) : (
@@ -549,7 +549,7 @@ export default function AdminPage() {
                       <div className="flex gap-2">
                         <button
                           onClick={() => setEditTarget(pod)}
-                          className="w-8 h-8 rounded-xl flex items-center justify-center text-white/30 hover:text-purple-400 border border-white/[0.08] hover:border-purple-500/40 transition-all"
+                          className="w-8 h-8 rounded-xl flex items-center justify-center text-white/30 hover:text-blue-400 border border-white/[0.08] hover:border-blue-500/40 transition-all"
                         ><I.Edit /></button>
                         <button
                           onClick={() => setDelTarget(pod)}
