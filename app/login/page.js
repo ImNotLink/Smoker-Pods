@@ -77,16 +77,16 @@ function LoginForm() {
         >
           <div className="text-center mb-8">
             <div className="flex items-center justify-center gap-2 mb-4">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-                <path d="M13 2L4.5 13.5H11L10 22L19.5 10.5H13L13 2Z" fill="url(#lg1)" />
-                <defs>
-                  <linearGradient id="lg1" x1="4.5" y1="2" x2="19.5" y2="22" gradientUnits="userSpaceOnUse">
-                    <stop stopColor="#a855f7" /><stop offset="1" stopColor="#ec4899" />
-                  </linearGradient>
-                </defs>
-              </svg>
-              <span className="text-2xl font-black tracking-tight text-white" style={{ letterSpacing: '-0.02em' }}>
-                Smoker<span style={{ color: '#a855f7' }}>Pods</span>
+              <span className="text-2xl font-black tracking-tight flex items-center gap-1.5" style={{ letterSpacing: '-0.02em' }}>
+                <span style={{ color: '#9ca3af' }}>Smoke</span><span style={{ color: '#ffffff', textShadow: '0 0 12px #60a5fa, 0 0 24px #3b82f6' }}>Pods</span>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                  <path d="M13 2L4.5 13.5H11L10 22L19.5 10.5H13L13 2Z" fill="url(#lg1)" />
+                  <defs>
+                    <linearGradient id="lg1" x1="4.5" y1="2" x2="19.5" y2="22" gradientUnits="userSpaceOnUse">
+                      <stop stopColor="#3b82f6" /><stop offset="1" stopColor="#60a5fa" />
+                    </linearGradient>
+                  </defs>
+                </svg>
               </span>
             </div>
             <p className="text-white/30 text-sm">Acesso restrito — área administrativa</p>
@@ -147,7 +147,7 @@ function LoginForm() {
         </div>
 
         <p className="text-center text-white/15 text-xs mt-6">
-          Smoker Pods © {new Date().getFullYear()} · Acesso Protegido
+          SmokePods © {new Date().getFullYear()} · Acesso Protegido
         </p>
       </div>
     </main>
