@@ -3,7 +3,7 @@ import './globals.css'
 
 export const metadata = {
   title: 'SmokePods — Os Melhores Pods e Vapes',
-  description: 'Compre os melhores pods e cigarros eletrônicos. Checkout rápido pelo WhatsApp.',
+  description: 'Compre os melhores pods. Pedido rápido pelo WhatsApp.',
 }
 
 export default function RootLayout({ children }) {
