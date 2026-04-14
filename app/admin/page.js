@@ -443,8 +443,8 @@ export default function AdminPage() {
 
   return (
     <div className="min-h-screen flex" style={{ background: '#050505' }}>
-
-      {/* ── Sidebar ─────────────────────────────────────────────────── */}
+      </div>
+      {/* ── Sidebar ─────────────────────────────────────────────────── */}  
       <aside
         className="fixed top-0 left-0 h-full w-56 flex flex-col py-7 px-4 z-20"
         style={{
@@ -666,9 +666,6 @@ export default function AdminPage() {
             </table>
           </div>
         )}
-      </main>
-
-        </>)}
 
         {/* ════ PEDIDOS TAB ════ */}
         {activeTab === 'orders' && (
@@ -878,6 +875,6 @@ export default function AdminPage() {
             style={{ background: 'linear-gradient(135deg, #dc2626, #ef4444)' }}>Excluir</button>
         </div>
       </Modal>
-    </div>
+    </main>
   )
 }
