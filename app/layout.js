@@ -2,7 +2,7 @@
 import './globals.css'
 
 export const metadata = {
-  title: 'SmokePods — Os Melhores Pods e Vapes',
+  title: 'SmokePods — Os Melhores Pods do Mercado',
   description: 'Compre os melhores pods. Pedido rápido pelo WhatsApp.',
 }
 
