@@ -10,7 +10,7 @@ function LoginForm() {
   const [checking, setChecking] = useState(true)
   const [error, setError] = useState('')
 
-  // Se já tiver sessão ativa, vai direto pro admin
+  // Se já tiver sessão ativa, vai direto pro admin hehehe
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
