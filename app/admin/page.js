@@ -668,7 +668,7 @@ export default function AdminPage() {
         )}
       </main>
 
-        </>)}
+       
 
         {/* ════ PEDIDOS TAB ════ */}
         {activeTab === 'orders' && (
