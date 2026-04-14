@@ -248,7 +248,7 @@ function ProductCard({ pod, onAddToCart, onZoom }) {
 }
 
 // ─── Main Page ─────────────────────────────────────────────────────────────────
-const WHATSAPP_NUMBER = '999103556173'
+const WHATSAPP_NUMBER = '559991036173'
 
 export default function HomePage() {
   const [pods, setPods] = useState([])
@@ -424,7 +424,7 @@ export default function HomePage() {
 
       {/* ── WhatsApp flutuante ────────────────────────────────────── */}
       <a
-        href={`https://wa.me/999103556173`}
+        href={`https://wa.me/559991036173`}
         target="_blank"
         rel="noopener noreferrer"
         className="fixed bottom-6 right-6 z-40 flex items-center justify-center rounded-full transition-all hover:scale-110 active:scale-95"
