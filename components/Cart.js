@@ -1,9 +1,9 @@
 'use client'
 
 import { useState } from 'react'
+import { supabase } from '@/lib/supabase'
 
 // ⚠️  SUBSTITUA pelo número real com DDI+DDD (sem espaços ou hífen)
-// Exemplo: Brasil, DDD 11 → '5511987654321'
 const WHATSAPP_NUMBER = '559991036173'
 
 const PAYMENT_OPTIONS = ['PIX', 'Dinheiro', 'Cartão de Crédito', 'Cartão de Débito']
@@ -16,7 +16,6 @@ function XIcon() {
     </svg>
   )
 }
-
 function TrashIcon() {
   return (
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -24,7 +23,6 @@ function TrashIcon() {
     </svg>
   )
 }
-
 function WAIcon() {
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
@@ -37,30 +35,50 @@ export default function Cart({ open, onClose, items, setItems }) {
   const [payment, setPayment] = useState('')
   const [howFound, setHowFound] = useState('')
   const [formError, setFormError] = useState('')
+  const [sending, setSending] = useState(false)
 
   const total = items.reduce((sum, i) => sum + i.unitPrice * i.qty, 0)
   const totalQty = items.reduce((s, i) => s + i.qty, 0)
 
   function removeItem(key) {
-    setItems((prev) => prev.filter((i) => i.cartKey !== key))
+    setItems(prev => prev.filter(i => i.cartKey !== key))
   }
 
   function changeQty(key, delta) {
-    setItems((prev) =>
-      prev
-        .map((i) => (i.cartKey === key ? { ...i, qty: i.qty + delta } : i))
-        .filter((i) => i.qty > 0)
+    setItems(prev =>
+      prev.map(i => i.cartKey === key ? { ...i, qty: i.qty + delta } : i).filter(i => i.qty > 0)
     )
   }
 
-  function checkout() {
+  async function checkout() {
     setFormError('')
     if (!payment) { setFormError('Selecione a forma de pagamento.'); return }
     if (!howFound) { setFormError('Informe como nos conheceu.'); return }
     if (items.length === 0) { setFormError('Seu carrinho está vazio.'); return }
 
+    setSending(true)
+
+    // Salva pedido no Supabase
+    try {
+      await supabase.from('orders').insert({
+        items: items.map(i => ({
+          id: i.id,
+          name: i.name,
+          flavor: i.selectedFlavor,
+          qty: i.qty,
+          unit_price: i.unitPrice,
+          subtotal: i.unitPrice * i.qty,
+        })),
+        total: parseFloat(total.toFixed(2)),
+        payment,
+        how_found: howFound,
+      })
+    } catch (e) {
+      console.error('Erro ao salvar pedido:', e)
+    }
+
     const lines = [
-'🛒 *Novo Pedido — SmokePods*',
+      '🛒 *Novo Pedido — Smoke Pods*',
       '',
       '*Itens:*',
       ...items.map((i, n) =>
@@ -74,10 +92,12 @@ export default function Cart({ open, onClose, items, setItems }) {
       '_Aguardo a confirmação! 🙏_',
     ]
 
-    window.open(
-      `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(lines.join('\n'))}`,
-      '_blank'
-    )
+    window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(lines.join('\n'))}`, '_blank')
+    setSending(false)
+    setItems([])
+    setPayment('')
+    setHowFound('')
+    onClose()
   }
 
   const sel = {
@@ -95,7 +115,6 @@ export default function Cart({ open, onClose, items, setItems }) {
 
   return (
     <>
-      {/* Backdrop */}
       <div
         onClick={onClose}
         className="fixed inset-0 z-40 transition-all duration-300"
@@ -105,8 +124,6 @@ export default function Cart({ open, onClose, items, setItems }) {
           pointerEvents: open ? 'auto' : 'none',
         }}
       />
-
-      {/* Drawer */}
       <aside
         className="fixed top-0 right-0 h-full z-50 flex flex-col"
         style={{
@@ -120,20 +137,16 @@ export default function Cart({ open, onClose, items, setItems }) {
         }}
       >
         {/* Header */}
-        <div
-          className="flex items-center justify-between px-6 py-5 flex-shrink-0"
-          style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}
-        >
+        <div className="flex items-center justify-between px-6 py-5 flex-shrink-0"
+          style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
           <div>
             <h2 className="text-white font-bold text-lg">Carrinho</h2>
             <p className="text-white/35 text-xs mt-0.5">
               {totalQty === 0 ? 'Nenhum item' : `${totalQty} item${totalQty > 1 ? 's' : ''}`}
             </p>
           </div>
-          <button
-            onClick={onClose}
-            className="w-9 h-9 rounded-xl flex items-center justify-center text-white/40 hover:text-white border border-white/[0.08] hover:border-white/20 transition-all"
-          >
+          <button onClick={onClose}
+            className="w-9 h-9 rounded-xl flex items-center justify-center text-white/40 hover:text-white border border-white/[0.08] hover:border-white/20 transition-all">
             <XIcon />
           </button>
         </div>
@@ -149,114 +162,69 @@ export default function Cart({ open, onClose, items, setItems }) {
               </svg>
               <p className="text-sm">Seu carrinho está vazio</p>
             </div>
-          ) : (
-            items.map((item) => (
-              <div
-                key={item.cartKey}
-                className="flex gap-3 p-3.5 rounded-2xl"
-                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}
-              >
-                {/* Image */}
-                <div
-                  className="w-14 h-14 rounded-xl flex-shrink-0 overflow-hidden flex items-center justify-center"
-                  style={{ background: 'rgba(168,85,247,0.08)' }}
-                >
-                  {item.image_url ? (
-                    <img src={item.image_url} alt={item.name} className="w-full h-full object-contain p-1" />
-                  ) : (
-                    <span className="text-purple-400/30 text-2xl">📦</span>
-                  )}
-                </div>
-
-                {/* Info */}
-                <div className="flex-1 min-w-0">
-                  <p className="text-white font-semibold text-sm truncate">{item.name}</p>
-                  <p className="text-purple-400 text-xs mt-0.5">{item.selectedFlavor}</p>
-                  <p className="text-white font-bold text-sm mt-1.5">
-                    R$ {(item.unitPrice * item.qty).toFixed(2).replace('.', ',')}
-                  </p>
-                </div>
-
-                {/* Controls */}
-                <div className="flex flex-col items-end gap-2 flex-shrink-0">
-                  <button
-                    onClick={() => removeItem(item.cartKey)}
-                    className="text-white/20 hover:text-red-400 transition-colors"
-                  >
-                    <TrashIcon />
-                  </button>
-                  <div
-                    className="flex items-center rounded-lg overflow-hidden"
-                    style={{ border: '1px solid rgba(255,255,255,0.1)' }}
-                  >
-                    <button
-                      onClick={() => changeQty(item.cartKey, -1)}
-                      className="px-2.5 py-1 text-white/50 hover:text-white text-sm transition-colors"
-                    >−</button>
-                    <span className="px-2 text-white text-xs font-bold min-w-[1.5rem] text-center">
-                      {item.qty}
-                    </span>
-                    <button
-                      onClick={() => changeQty(item.cartKey, 1)}
-                      className="px-2.5 py-1 text-white/50 hover:text-white text-sm transition-colors"
-                    >+</button>
-                  </div>
+          ) : items.map(item => (
+            <div key={item.cartKey} className="flex gap-3 p-3.5 rounded-2xl"
+              style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
+              <div className="w-14 h-14 rounded-xl flex-shrink-0 overflow-hidden flex items-center justify-center"
+                style={{ background: 'rgba(59,130,246,0.08)' }}>
+                {item.image_url
+                  ? <img src={item.image_url} alt={item.name} className="w-full h-full object-contain p-1" />
+                  : <span className="text-2xl">📦</span>
+                }
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-white font-semibold text-sm truncate">{item.name}</p>
+                <p className="text-blue-400 text-xs mt-0.5">{item.selectedFlavor}</p>
+                <p className="text-white font-bold text-sm mt-1.5">
+                  R$ {(item.unitPrice * item.qty).toFixed(2).replace('.', ',')}
+                </p>
+              </div>
+              <div className="flex flex-col items-end gap-2 flex-shrink-0">
+                <button onClick={() => removeItem(item.cartKey)} className="text-white/20 hover:text-red-400 transition-colors">
+                  <TrashIcon />
+                </button>
+                <div className="flex items-center rounded-lg overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.1)' }}>
+                  <button onClick={() => changeQty(item.cartKey, -1)} className="px-2.5 py-1 text-white/50 hover:text-white text-sm transition-colors">−</button>
+                  <span className="px-2 text-white text-xs font-bold min-w-[1.5rem] text-center">{item.qty}</span>
+                  <button onClick={() => changeQty(item.cartKey, 1)} className="px-2.5 py-1 text-white/50 hover:text-white text-sm transition-colors">+</button>
                 </div>
               </div>
-            ))
-          )}
+            </div>
+          ))}
         </div>
 
-        {/* Checkout footer */}
+        {/* Checkout */}
         {items.length > 0 && (
-          <div
-            className="flex-shrink-0 px-5 py-5 space-y-4"
-            style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}
-          >
-            {/* Total */}
+          <div className="flex-shrink-0 px-5 py-5 space-y-4" style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}>
             <div className="flex justify-between items-center">
               <span className="text-white/40 text-sm">Total</span>
-              <span className="text-white font-black text-xl" style={{ color: '#a855f7' }}>
+              <span className="font-black text-xl" style={{ color: '#3b82f6' }}>
                 R$ {total.toFixed(2).replace('.', ',')}
               </span>
             </div>
-
-            {/* Payment */}
             <div>
-              <label className="block text-white/35 text-xs font-semibold uppercase tracking-widest mb-1.5">
-                Forma de Pagamento *
-              </label>
-              <select value={payment} onChange={(e) => setPayment(e.target.value)} style={sel}>
-                <option value="" disabled style={{ color: 'rgba(255,255,255,0.3)' }}>Selecione...</option>
-                {PAYMENT_OPTIONS.map((o) => <option key={o} value={o}>{o}</option>)}
-              </select>
-            </div>
-
-            {/* How found */}
-            <div>
-              <label className="block text-white/35 text-xs font-semibold uppercase tracking-widest mb-1.5">
-                Como nos conheceu? *
-              </label>
-              <select value={howFound} onChange={(e) => setHowFound(e.target.value)} style={sel}>
+              <label className="block text-white/35 text-xs font-semibold uppercase tracking-widest mb-1.5">Forma de Pagamento *</label>
+              <select value={payment} onChange={e => setPayment(e.target.value)} style={sel}>
                 <option value="" disabled>Selecione...</option>
-                {HOW_FOUND_OPTIONS.map((o) => <option key={o} value={o}>{o}</option>)}
+                {PAYMENT_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
               </select>
             </div>
-
-            {formError && (
-              <p className="text-red-400 text-xs">{formError}</p>
-            )}
-
+            <div>
+              <label className="block text-white/35 text-xs font-semibold uppercase tracking-widest mb-1.5">Como nos conheceu? *</label>
+              <select value={howFound} onChange={e => setHowFound(e.target.value)} style={sel}>
+                <option value="" disabled>Selecione...</option>
+                {HOW_FOUND_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
+              </select>
+            </div>
+            {formError && <p className="text-red-400 text-xs">{formError}</p>}
             <button
               onClick={checkout}
-              className="w-full flex items-center justify-center gap-2.5 py-4 rounded-2xl font-bold text-white text-sm tracking-wide transition-all hover:brightness-110 active:scale-[0.98]"
-              style={{
-                background: 'linear-gradient(135deg, #22c55e, #16a34a)',
-                boxShadow: '0 0 30px rgba(34,197,94,0.25)',
-              }}
+              disabled={sending}
+              className="w-full flex items-center justify-center gap-2.5 py-4 rounded-2xl font-bold text-white text-sm tracking-wide transition-all hover:brightness-110 active:scale-[0.98] disabled:opacity-60"
+              style={{ background: 'linear-gradient(135deg, #22c55e, #16a34a)', boxShadow: '0 0 30px rgba(34,197,94,0.25)' }}
             >
               <WAIcon />
-              Finalizar pelo WhatsApp
+              {sending ? 'Enviando...' : 'Finalizar pelo WhatsApp'}
             </button>
           </div>
         )}

@@ -16,7 +16,7 @@ const I = {
 }
 
 // ─── Constants ──────────────────────────────────────────────────────────────────
-const EMPTY = { name: '', price: '', promo_price: '', on_sale: false, stock_qty: '', image_url: '', flavors: [] }
+const EMPTY = { name: '', price: '', promo_price: '', on_sale: false, stock_qty: '0', image_url: '', flavors: [], flavor_stock: {} }
 
 // ─── UI helpers ────────────────────────────────────────────────────────────────
 const inputCls = 'w-full px-4 py-2.5 rounded-xl text-white text-sm outline-none transition-colors border border-white/[0.08] focus:border-blue-500/50 placeholder-white/20'
@@ -58,8 +58,12 @@ function Modal({ open, onClose, title, children }) {
 
 // ─── Product Form ──────────────────────────────────────────────────────────────
 function ProductForm({ initial, onSave, onCancel, saving }) {
-  const [f, setF] = useState(initial || EMPTY)
-  const [fi, setFi] = useState('')          // flavor input
+  const [f, setF] = useState(() => ({
+    ...EMPTY,
+    ...(initial || {}),
+    flavor_stock: initial?.flavor_stock || {},
+  }))
+  const [fi, setFi] = useState('')
   const [imgFile, setImgFile] = useState(null)
   const [preview, setPreview] = useState(initial?.image_url || '')
   const [uploading, setUploading] = useState(false)
@@ -67,11 +71,28 @@ function ProductForm({ initial, onSave, onCancel, saving }) {
 
   const set = (k, v) => setF((p) => ({ ...p, [k]: v }))
 
+  // Calcula stock_qty como soma de todos os sabores
+  const totalStock = Object.values(f.flavor_stock || {}).reduce((a, b) => a + (parseInt(b) || 0), 0)
+
   function addFlavor() {
     const trimmed = fi.trim()
     if (!trimmed || f.flavors.includes(trimmed)) return
-    set('flavors', [...f.flavors, trimmed])
+    const newFlavors = [...f.flavors, trimmed]
+    const newStock = { ...f.flavor_stock, [trimmed]: f.flavor_stock[trimmed] ?? 0 }
+    setF(p => ({ ...p, flavors: newFlavors, flavor_stock: newStock }))
     setFi('')
+  }
+
+  function removeFlavor(fl) {
+    const newFlavors = f.flavors.filter(x => x !== fl)
+    const newStock = { ...f.flavor_stock }
+    delete newStock[fl]
+    setF(p => ({ ...p, flavors: newFlavors, flavor_stock: newStock }))
+  }
+
+  function setFlavorStock(fl, val) {
+    const num = Math.max(0, parseInt(val) || 0)
+    setF(p => ({ ...p, flavor_stock: { ...p.flavor_stock, [fl]: num } }))
   }
 
   function handleImg(e) {
@@ -83,7 +104,7 @@ function ProductForm({ initial, onSave, onCancel, saving }) {
 
   async function submit(e) {
     e.preventDefault()
-    if (!f.name.trim() || !f.price || f.stock_qty === '') return
+    if (!f.name.trim() || !f.price) return
 
     setUploading(true)
     let imageUrl = f.image_url
@@ -93,7 +114,7 @@ function ProductForm({ initial, onSave, onCancel, saving }) {
       catch (err) { alert('Erro no upload: ' + err.message); setUploading(false); return }
     }
 
-    onSave({ ...f, image_url: imageUrl })
+    onSave({ ...f, image_url: imageUrl, stock_qty: totalStock })
     setUploading(false)
   }
 
@@ -163,18 +184,8 @@ function ProductForm({ initial, onSave, onCancel, saving }) {
         </div>
       </div>
 
-      {/* Stock + On sale */}
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className={labelCls}>Estoque *</label>
-          <input
-            className={inputCls} style={inputStyle}
-            type="number" min="0"
-            value={f.stock_qty}
-            onChange={(e) => set('stock_qty', e.target.value)}
-            placeholder="0" required
-          />
-        </div>
+      {/* On sale only (stock is now per-flavor) */}
+      <div>
         <div>
           <label className={labelCls}>Promoção ativa</label>
           <button
@@ -192,10 +203,12 @@ function ProductForm({ initial, onSave, onCancel, saving }) {
         </div>
       </div>
 
-      {/* Flavors */}
+      {/* Flavors + Stock Table */}
       <div>
-        <label className={labelCls}>Sabores</label>
-        <div className="flex gap-2 mb-2">
+        <label className={labelCls}>Sabores & Estoque por Sabor</label>
+
+        {/* Add flavor input */}
+        <div className="flex gap-2 mb-3">
           <input
             className={`${inputCls} flex-1`} style={inputStyle}
             value={fi}
@@ -205,27 +218,89 @@ function ProductForm({ initial, onSave, onCancel, saving }) {
           />
           <button
             type="button" onClick={addFlavor}
-            className="px-4 py-2.5 rounded-xl text-white text-sm font-bold transition-all hover:brightness-110"
+            className="px-4 py-2.5 rounded-xl text-white text-sm font-bold transition-all hover:brightness-110 flex-shrink-0"
             style={{ background: 'linear-gradient(135deg, #1d4ed8, #3b82f6)' }}
-          >+ Add</button>
+          >+ Adicionar</button>
         </div>
+
+        {/* Flavor stock table */}
         {f.flavors.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 mt-2">
-            {f.flavors.map((fl) => (
+          <div
+            className="rounded-2xl overflow-hidden"
+            style={{ border: '1px solid rgba(255,255,255,0.08)' }}
+          >
+            {/* Table header */}
+            <div
+              className="grid grid-cols-[1fr_100px_36px] gap-2 px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-white/30"
+              style={{ background: 'rgba(255,255,255,0.03)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}
+            >
+              <span>Sabor</span>
+              <span className="text-center">Estoque</span>
+              <span></span>
+            </div>
+            {/* Rows */}
+            {f.flavors.map((fl, idx) => {
+              const qty = f.flavor_stock[fl] ?? 0
+              const isLow = qty > 0 && qty <= 3
+              const isOut = qty === 0
+              return (
+                <div
+                  key={fl}
+                  className="grid grid-cols-[1fr_100px_36px] gap-2 items-center px-4 py-2.5"
+                  style={{
+                    borderBottom: idx < f.flavors.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none',
+                    background: isOut ? 'rgba(239,68,68,0.04)' : 'transparent',
+                  }}
+                >
+                  <span
+                    className="text-sm font-medium truncate"
+                    style={{ color: isOut ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.8)' }}
+                  >
+                    {fl}
+                    {isOut && <span className="ml-2 text-red-400/60 text-xs">Esgotado</span>}
+                    {isLow && <span className="ml-2 text-orange-400/80 text-xs">⚡ Baixo</span>}
+                  </span>
+                  <input
+                    type="number"
+                    min="0"
+                    value={qty}
+                    onChange={e => setFlavorStock(fl, e.target.value)}
+                    className="text-center text-white text-sm font-bold rounded-lg outline-none transition-colors"
+                    style={{
+                      background: isOut ? 'rgba(239,68,68,0.1)' : isLow ? 'rgba(251,146,60,0.1)' : 'rgba(59,130,246,0.08)',
+                      border: isOut ? '1px solid rgba(239,68,68,0.3)' : isLow ? '1px solid rgba(251,146,60,0.3)' : '1px solid rgba(59,130,246,0.2)',
+                      color: isOut ? '#f87171' : isLow ? '#fcd34d' : '#93c5fd',
+                      padding: '6px 8px',
+                      width: '100%',
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeFlavor(fl)}
+                    className="w-8 h-8 rounded-lg flex items-center justify-center text-white/20 hover:text-red-400 hover:bg-red-400/10 transition-all text-lg leading-none"
+                  >×</button>
+                </div>
+              )
+            })}
+            {/* Total row */}
+            <div
+              className="grid grid-cols-[1fr_100px_36px] gap-2 items-center px-4 py-2.5"
+              style={{ borderTop: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.02)' }}
+            >
+              <span className="text-xs font-semibold text-white/40 uppercase tracking-wider">Total</span>
               <span
-                key={fl}
-                className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold text-blue-300"
-                style={{ background: 'rgba(59,130,246,0.12)', border: '1px solid rgba(59,130,246,0.25)' }}
+                className="text-center text-sm font-black"
+                style={{ color: totalStock === 0 ? '#f87171' : totalStock <= 5 ? '#fcd34d' : '#4ade80' }}
               >
-                {fl}
-                <button
-                  type="button"
-                  onClick={() => set('flavors', f.flavors.filter((x) => x !== fl))}
-                  className="text-blue-400/40 hover:text-red-400 transition-colors leading-none text-base"
-                >×</button>
+                {totalStock}
               </span>
-            ))}
+              <span></span>
+            </div>
           </div>
+        )}
+
+        {f.flavors.length === 0 && (
+          <p className="text-white/20 text-xs mt-1">Adicione sabores acima para configurar o estoque de cada um.</p>
         )}
       </div>
 
@@ -252,12 +327,15 @@ function ProductForm({ initial, onSave, onCancel, saving }) {
 export default function AdminPage() {
   const router = useRouter()
   const [pods, setPods] = useState([])
+  const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(true)
+  const [ordersLoading, setOrdersLoading] = useState(false)
   const [authChecked, setAuthChecked] = useState(false)
   const [saving, setSaving] = useState(false)
-  const [editTarget, setEditTarget] = useState(null)   // null=closed | {}=new | pod=edit
+  const [editTarget, setEditTarget] = useState(null)
   const [delTarget, setDelTarget] = useState(null)
   const [search, setSearch] = useState('')
+  const [activeTab, setActiveTab] = useState('products')
 
   // ── Proteção client-side: verifica sessão antes de mostrar qualquer coisa ──
   useEffect(() => {
@@ -287,6 +365,13 @@ export default function AdminPage() {
     setLoading(false)
   }
 
+  async function fetchOrders() {
+    setOrdersLoading(true)
+    const { data } = await supabase.from('orders').select('*').order('created_at', { ascending: false }).limit(200)
+    setOrders(data || [])
+    setOrdersLoading(false)
+  }
+
   async function handleLogout() {
     await supabase.auth.signOut()
     router.push('/login')
@@ -300,9 +385,10 @@ export default function AdminPage() {
       price: parseFloat(form.price),
       promo_price: form.promo_price ? parseFloat(form.promo_price) : null,
       on_sale: form.on_sale,
-      stock_qty: parseInt(form.stock_qty),
+      stock_qty: form.stock_qty || 0,
       image_url: form.image_url || null,
       flavors: form.flavors,
+      flavor_stock: form.flavor_stock || {},
     }
 
     if (form.id) {
@@ -380,17 +466,28 @@ export default function AdminPage() {
           </span>
         </div>
 
-        <div className="flex-1">
-          <div
-            className="px-3 py-2.5 rounded-xl text-sm font-semibold"
-            style={{
-              background: 'rgba(59,130,246,0.12)',
-              border: '1px solid rgba(59,130,246,0.2)',
-              color: '#93c5fd',
-            }}
-          >
-            📦 Produtos
-          </div>
+        <div className="flex-1 space-y-1">
+          {[
+            { id: 'products', label: '📦 Produtos' },
+            { id: 'orders',   label: '📋 Pedidos' },
+            { id: 'sales',    label: '📊 Vendas' },
+          ].map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => {
+                setActiveTab(tab.id)
+                if (tab.id === 'orders' || tab.id === 'sales') fetchOrders()
+              }}
+              className="w-full text-left px-3 py-2.5 rounded-xl text-sm font-semibold transition-all"
+              style={{
+                background: activeTab === tab.id ? 'rgba(59,130,246,0.12)' : 'transparent',
+                border: activeTab === tab.id ? '1px solid rgba(59,130,246,0.2)' : '1px solid transparent',
+                color: activeTab === tab.id ? '#93c5fd' : 'rgba(255,255,255,0.35)',
+              }}
+            >
+              {tab.label}
+            </button>
+          ))}
         </div>
 
         <div className="space-y-1">
@@ -571,42 +668,214 @@ export default function AdminPage() {
         )}
       </main>
 
+        </>)}
+
+        {/* ════ PEDIDOS TAB ════ */}
+        {activeTab === 'orders' && (
+          <div>
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <h1 className="text-white text-2xl font-black tracking-tight">Pedidos</h1>
+                <p className="text-white/30 text-sm mt-0.5">{orders.length} pedido{orders.length !== 1 ? 's' : ''} registrado{orders.length !== 1 ? 's' : ''}</p>
+              </div>
+            </div>
+            {ordersLoading ? (
+              <div className="flex items-center justify-center h-40">
+                <div className="w-7 h-7 rounded-full border-2 border-t-transparent animate-spin"
+                  style={{ borderColor: 'rgba(59,130,246,0.3)', borderTopColor: '#3b82f6' }} />
+              </div>
+            ) : orders.length === 0 ? (
+              <div className="text-center text-white/20 py-20 text-sm">Nenhum pedido ainda.</div>
+            ) : (
+              <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.07)' }}>
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.02)' }}>
+                      {['Data', 'Itens', 'Total', 'Pagamento', 'Como nos conheceu'].map(h => (
+                        <th key={h} className="text-left px-5 py-3.5 text-white/25 text-xs font-semibold uppercase tracking-wider">{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {orders.map((order, idx) => (
+                      <tr key={order.id}
+                        className="transition-colors hover:bg-white/[0.015]"
+                        style={{ borderBottom: idx < orders.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}>
+                        <td className="px-5 py-4 text-white/50 text-xs whitespace-nowrap">
+                          {new Date(order.created_at).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                        </td>
+                        <td className="px-5 py-4">
+                          <div className="space-y-1">
+                            {(order.items || []).map((item, i) => (
+                              <div key={i} className="text-xs text-white/70">
+                                <span className="font-semibold text-white">{item.name}</span>
+                                <span className="text-white/40 mx-1">·</span>
+                                <span className="text-blue-400">{item.flavor}</span>
+                                <span className="text-white/30 ml-1">×{item.qty}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </td>
+                        <td className="px-5 py-4">
+                          <span className="font-black text-sm" style={{ color: '#3b82f6' }}>
+                            R$ {Number(order.total).toFixed(2).replace('.', ',')}
+                          </span>
+                        </td>
+                        <td className="px-5 py-4">
+                          <span className="px-2.5 py-1 rounded-full text-xs font-semibold text-white/70"
+                            style={{ background: 'rgba(255,255,255,0.06)' }}>
+                            {order.payment}
+                          </span>
+                        </td>
+                        <td className="px-5 py-4 text-white/40 text-xs">{order.how_found}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ════ VENDAS TAB ════ */}
+        {activeTab === 'sales' && (
+          <div>
+            <div className="mb-8">
+              <h1 className="text-white text-2xl font-black tracking-tight">Painel de Vendas</h1>
+              <p className="text-white/30 text-sm mt-0.5">Resumo baseado nos pedidos registrados</p>
+            </div>
+
+            {ordersLoading ? (
+              <div className="flex items-center justify-center h-40">
+                <div className="w-7 h-7 rounded-full border-2 border-t-transparent animate-spin"
+                  style={{ borderColor: 'rgba(59,130,246,0.3)', borderTopColor: '#3b82f6' }} />
+              </div>
+            ) : (() => {
+              // Calcula métricas
+              const totalRevenue = orders.reduce((s, o) => s + Number(o.total), 0)
+              const totalOrders = orders.length
+              const avgTicket = totalOrders > 0 ? totalRevenue / totalOrders : 0
+
+              // Produtos mais pedidos
+              const productCount = {}
+              orders.forEach(o => (o.items || []).forEach(item => {
+                const key = item.name
+                productCount[key] = (productCount[key] || 0) + item.qty
+              }))
+              const topProducts = Object.entries(productCount)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 8)
+              const maxCount = topProducts[0]?.[1] || 1
+
+              // Pagamentos
+              const paymentCount = {}
+              orders.forEach(o => { paymentCount[o.payment] = (paymentCount[o.payment] || 0) + 1 })
+
+              // Como nos conheceu
+              const sourceCount = {}
+              orders.forEach(o => { sourceCount[o.how_found] = (sourceCount[o.how_found] || 0) + 1 })
+
+              return (
+                <div className="space-y-6">
+                  {/* Cards de resumo */}
+                  <div className="grid grid-cols-3 gap-4">
+                    {[
+                      { label: 'Total em Pedidos', value: `R$ ${totalRevenue.toFixed(2).replace('.', ',')}`, color: '#3b82f6' },
+                      { label: 'Nº de Pedidos', value: totalOrders, color: '#22c55e' },
+                      { label: 'Ticket Médio', value: `R$ ${avgTicket.toFixed(2).replace('.', ',')}`, color: '#f59e0b' },
+                    ].map(s => (
+                      <div key={s.label} className="rounded-2xl p-5"
+                        style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                        <p className="text-white/30 text-xs font-semibold uppercase tracking-wider">{s.label}</p>
+                        <p className="text-2xl font-black mt-1.5" style={{ color: s.color }}>{s.value}</p>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-6">
+                    {/* Produtos mais pedidos */}
+                    <div className="rounded-2xl p-5" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                      <h3 className="text-white font-bold text-sm mb-4">🏆 Produtos Mais Pedidos</h3>
+                      {topProducts.length === 0 ? (
+                        <p className="text-white/20 text-sm">Sem dados ainda.</p>
+                      ) : (
+                        <div className="space-y-3">
+                          {topProducts.map(([name, count]) => (
+                            <div key={name}>
+                              <div className="flex justify-between items-center mb-1">
+                                <span className="text-white/70 text-xs truncate flex-1 mr-2">{name}</span>
+                                <span className="text-blue-400 font-bold text-xs flex-shrink-0">{count}x</span>
+                              </div>
+                              <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.06)' }}>
+                                <div className="h-full rounded-full transition-all duration-500"
+                                  style={{
+                                    width: `${(count / maxCount) * 100}%`,
+                                    background: 'linear-gradient(90deg, #1d4ed8, #3b82f6)',
+                                  }} />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="space-y-4">
+                      {/* Formas de pagamento */}
+                      <div className="rounded-2xl p-5" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                        <h3 className="text-white font-bold text-sm mb-3">💳 Pagamentos</h3>
+                        <div className="space-y-2">
+                          {Object.entries(paymentCount).sort((a,b)=>b[1]-a[1]).map(([method, count]) => (
+                            <div key={method} className="flex justify-between items-center">
+                              <span className="text-white/60 text-xs">{method}</span>
+                              <span className="px-2 py-0.5 rounded-full text-xs font-bold text-white/70"
+                                style={{ background: 'rgba(255,255,255,0.07)' }}>{count}</span>
+                            </div>
+                          ))}
+                          {Object.keys(paymentCount).length === 0 && <p className="text-white/20 text-xs">Sem dados.</p>}
+                        </div>
+                      </div>
+
+                      {/* Como nos conheceu */}
+                      <div className="rounded-2xl p-5" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                        <h3 className="text-white font-bold text-sm mb-3">📣 Como nos conheceu</h3>
+                        <div className="space-y-2">
+                          {Object.entries(sourceCount).sort((a,b)=>b[1]-a[1]).map(([source, count]) => (
+                            <div key={source} className="flex justify-between items-center">
+                              <span className="text-white/60 text-xs">{source}</span>
+                              <span className="px-2 py-0.5 rounded-full text-xs font-bold text-white/70"
+                                style={{ background: 'rgba(255,255,255,0.07)' }}>{count}</span>
+                            </div>
+                          ))}
+                          {Object.keys(sourceCount).length === 0 && <p className="text-white/20 text-xs">Sem dados.</p>}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )
+            })()}
+          </div>
+        )}
+
       {/* Edit / Create Modal */}
-      <Modal
-        open={editTarget !== null}
-        onClose={() => setEditTarget(null)}
-        title={editTarget?.id ? 'Editar Produto' : 'Novo Produto'}
-      >
+      <Modal open={editTarget !== null} onClose={() => setEditTarget(null)}
+        title={editTarget?.id ? 'Editar Produto' : 'Novo Produto'}>
         {editTarget !== null && (
-          <ProductForm
-            initial={editTarget}
-            onSave={handleSave}
-            onCancel={() => setEditTarget(null)}
-            saving={saving}
-          />
+          <ProductForm initial={editTarget} onSave={handleSave} onCancel={() => setEditTarget(null)} saving={saving} />
         )}
       </Modal>
 
       {/* Delete confirm */}
-      <Modal
-        open={delTarget !== null}
-        onClose={() => setDelTarget(null)}
-        title="Confirmar Exclusão"
-      >
+      <Modal open={delTarget !== null} onClose={() => setDelTarget(null)} title="Confirmar Exclusão">
         <p className="text-white/50 text-sm mb-6">
-          Excluir <span className="text-white font-semibold">"{delTarget?.name}"</span>?
-          A imagem também será removida do Storage. Esta ação é irreversível.
+          Excluir <span className="text-white font-semibold">"{delTarget?.name}"</span>? Esta ação é irreversível.
         </p>
         <div className="flex gap-3">
-          <button
-            onClick={() => setDelTarget(null)}
-            className="flex-1 py-3 rounded-xl text-sm text-white/40 border border-white/[0.08] hover:border-white/20 transition-colors"
-          >Cancelar</button>
-          <button
-            onClick={handleDelete}
+          <button onClick={() => setDelTarget(null)}
+            className="flex-1 py-3 rounded-xl text-sm text-white/40 border border-white/[0.08] hover:border-white/20 transition-colors">Cancelar</button>
+          <button onClick={handleDelete}
             className="flex-1 py-3 rounded-xl text-sm font-bold text-white transition-all hover:brightness-110"
-            style={{ background: 'linear-gradient(135deg, #dc2626, #ef4444)' }}
-          >Excluir</button>
+            style={{ background: 'linear-gradient(135deg, #dc2626, #ef4444)' }}>Excluir</button>
         </div>
       </Modal>
     </div>
