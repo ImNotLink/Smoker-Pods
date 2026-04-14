@@ -442,9 +442,9 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="min-h-screen flex" style={{ background: '#050505' }}>
-      </div>
-      {/* ── Sidebar ─────────────────────────────────────────────────── */}  
+  <><div className="min-h-screen flex" style={{ background: '#050505' }}>
+
+      {/* Sidebar */}
       <aside
         className="fixed top-0 left-0 h-full w-56 flex flex-col py-7 px-4 z-20"
         style={{
@@ -458,8 +458,434 @@ export default function AdminPage() {
             src="/Logo_pod.png"
             alt="SmokePods"
             className="w-7 h-7 object-contain flex-shrink-0"
-            style={{ filter: 'drop-shadow(0 0 5px rgba(59,130,246,0.5))' }}
-          />
+            style={{ filter: 'drop-shadow(0 0 5px rgba(59,130,246,0.5))' }} />
+          <span className="font-black text-base tracking-tight flex items-center gap-1.5">
+            <span style={{ color: '#9ca3af' }}>Smoke</span><span style={{ color: '#ffffff', textShadow: '0 0 12px #60a5fa, 0 0 24px #3b82f6' }}>Pods</span>
+            <I.Logo />
+          </span>
+        </div>
+        <div className="flex-1 space-y-1">
+          {[
+            { id: 'products', label: '📦 Produtos' },
+            { id: 'orders', label: '📋 Pedidos' },
+            { id: 'sales', label: '📊 Vendas' },
+          ].map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => {
+                setActiveTab(tab.id)
+                if (tab.id === 'orders' || tab.id === 'sales') fetchOrders()
+              } }
+              className="w-full text-left px-3 py-2.5 rounded-xl text-sm font-semibold transition-all"
+              style={{
+                background: activeTab === tab.id ? 'rgba(59,130,246,0.12)' : 'transparent',
+                border: activeTab === tab.id ? '1px solid rgba(59,130,246,0.2)' : '1px solid transparent',
+                color: activeTab === tab.id ? '#93c5fd' : 'rgba(255,255,255,0.35)',
+              }}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+        <div className="space-y-1">
+          <a
+            href="/"
+            className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm text-white/30 hover:text-white/60 transition-colors"
+          >
+            ← Ver Vitrine
+          </a>
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm text-white/30 hover:text-white/60 transition-colors"
+          >
+            <I.Logout /> Sair
+          </button>
+        </div>
+      </aside>
+
+      {/* Main */}
+      <main className="ml-56 flex-1 p-8">
+        {/* Top bar */}
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-white text-2xl font-black tracking-tight">Produtos</h1>
+            <p className="text-white/30 text-sm mt-0.5">Gerencie o catálogo da loja</p>
+          </div>
+          <button
+            onClick={() => setEditTarget(EMPTY)}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-white text-sm transition-all hover:brightness-110 active:scale-[0.97]"
+            style={{
+              background: 'linear-gradient(135deg, #1d4ed8, #3b82f6)',
+              boxShadow: '0 0 20px rgba(59,130,246,0.3)',
+            }}
+          >
+            <I.Plus /> Novo Produto
+          </button>
+        </div>
+
+        {/* Stats */}
+        <div className="grid grid-cols-4 gap-4 mb-8">
+          {stats.map((s) => (
+            <div
+              key={s.label}
+              className="rounded-2xl p-5"
+              style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
+            >
+              <p className="text-white/30 text-xs font-semibold uppercase tracking-wider">{s.label}</p>
+              <p className="text-3xl font-black mt-1.5" style={{ color: s.color }}>{s.val}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Search */}
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Buscar produto..."
+          className="w-full max-w-xs px-4 py-2.5 rounded-xl text-white text-sm placeholder-white/20 outline-none border border-white/[0.08] focus:border-blue-500/40 transition-colors mb-5"
+          style={{ background: 'rgba(255,255,255,0.04)' }} />
+
+        {/* Table */}
+        {loading ? (
+          <div className="flex items-center justify-center h-40">
+            <div className="w-7 h-7 rounded-full border-2 border-t-transparent animate-spin"
+              style={{ borderColor: 'rgba(59,130,246,0.3)', borderTopColor: '#3b82f6' }} />
+          </div>
+        ) : (
+          <div
+            className="rounded-2xl overflow-hidden"
+            style={{ border: '1px solid rgba(255,255,255,0.07)' }}
+          >
+            <table className="w-full text-sm">
+              <thead>
+                <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.02)' }}>
+                  {['Produto', 'Sabores', 'Preço', 'Promo', 'Estoque', 'Ações'].map((h) => (
+                    <th key={h} className="text-left px-5 py-3.5 text-white/25 text-xs font-semibold uppercase tracking-wider">
+                      {h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.length === 0 ? (
+                  <tr><td colSpan={6} className="text-center text-white/20 py-12 text-sm">Nenhum produto.</td></tr>
+                ) : filtered.map((pod, idx) => (
+                  <tr
+                    key={pod.id}
+                    className="transition-colors hover:bg-white/[0.015]"
+                    style={{ borderBottom: idx < filtered.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}
+                  >
+                    {/* Product */}
+                    <td className="px-5 py-4">
+                      <div className="flex items-center gap-3">
+                        <div
+                          className="w-10 h-10 rounded-xl flex-shrink-0 overflow-hidden flex items-center justify-center"
+                          style={{ background: 'rgba(59,130,246,0.07)' }}
+                        >
+                          {pod.image_url
+                            ? <img src={pod.image_url} alt="" className="w-full h-full object-contain p-1" />
+                            : <span className="text-blue-400/20 text-lg">📦</span>}
+                        </div>
+                        <span className="text-white font-semibold">{pod.name}</span>
+                      </div>
+                    </td>
+
+                    {/* Flavors */}
+                    <td className="px-5 py-4">
+                      <div className="flex flex-wrap gap-1">
+                        {pod.flavors.slice(0, 2).map((fl) => (
+                          <span key={fl}
+                            className="px-2 py-0.5 rounded-full text-xs text-blue-300"
+                            style={{ background: 'rgba(59,130,246,0.1)' }}
+                          >{fl}</span>
+                        ))}
+                        {pod.flavors.length > 2 && (
+                          <span className="px-2 py-0.5 rounded-full text-xs text-white/25">+{pod.flavors.length - 2}</span>
+                        )}
+                      </div>
+                    </td>
+
+                    {/* Price */}
+                    <td className="px-5 py-4">
+                      <span className="text-white font-semibold">R$ {pod.price.toFixed(2).replace('.', ',')}</span>
+                    </td>
+
+                    {/* Promo */}
+                    <td className="px-5 py-4">
+                      {pod.on_sale && pod.promo_price ? (
+                        <span className="text-blue-400 text-xs font-semibold">
+                          R$ {pod.promo_price.toFixed(2).replace('.', ',')}
+                        </span>
+                      ) : (
+                        <span className="text-white/20 text-xs">—</span>
+                      )}
+                    </td>
+
+                    {/* Stock */}
+                    <td className="px-5 py-4">
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          onClick={() => quickStock(pod.id, -1, pod.stock_qty)}
+                          className="w-6 h-6 rounded-lg flex items-center justify-center text-white/30 hover:text-white border border-white/[0.08] transition-all text-sm font-bold"
+                        >−</button>
+                        <span
+                          className="min-w-[2rem] text-center font-bold text-sm"
+                          style={{ color: pod.stock_qty === 0 ? '#ef4444' : pod.stock_qty <= 3 ? '#f59e0b' : '#22c55e' }}
+                        >
+                          {pod.stock_qty}
+                        </span>
+                        <button
+                          onClick={() => quickStock(pod.id, 1, pod.stock_qty)}
+                          className="w-6 h-6 rounded-lg flex items-center justify-center text-white/30 hover:text-white border border-white/[0.08] transition-all text-sm font-bold"
+                        >+</button>
+                      </div>
+                    </td>
+
+                    {/* Actions */}
+                    <td className="px-5 py-4">
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => setEditTarget(pod)}
+                          className="w-8 h-8 rounded-xl flex items-center justify-center text-white/30 hover:text-blue-400 border border-white/[0.08] hover:border-blue-500/40 transition-all"
+                        ><I.Edit /></button>
+                        <button
+                          onClick={() => setDelTarget(pod)}
+                          className="w-8 h-8 rounded-xl flex items-center justify-center text-white/30 hover:text-red-400 border border-white/[0.08] hover:border-red-500/40 transition-all"
+                        ><I.Trash /></button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* ════ PEDIDOS TAB ════ */}
+        {activeTab === 'orders' && (
+          <div>
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <h1 className="text-white text-2xl font-black tracking-tight">Pedidos</h1>
+                <p className="text-white/30 text-sm mt-0.5">{orders.length} pedido{orders.length !== 1 ? 's' : ''} registrado{orders.length !== 1 ? 's' : ''}</p>
+              </div>
+            </div>
+            {ordersLoading ? (
+              <div className="flex items-center justify-center h-40">
+                <div className="w-7 h-7 rounded-full border-2 border-t-transparent animate-spin"
+                  style={{ borderColor: 'rgba(59,130,246,0.3)', borderTopColor: '#3b82f6' }} />
+              </div>
+            ) : orders.length === 0 ? (
+              <div className="text-center text-white/20 py-20 text-sm">Nenhum pedido ainda.</div>
+            ) : (
+              <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.07)' }}>
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.02)' }}>
+                      {['Data', 'Itens', 'Total', 'Pagamento', 'Como nos conheceu'].map(h => (
+                        <th key={h} className="text-left px-5 py-3.5 text-white/25 text-xs font-semibold uppercase tracking-wider">{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {orders.map((order, idx) => (
+                      <tr key={order.id}
+                        className="transition-colors hover:bg-white/[0.015]"
+                        style={{ borderBottom: idx < orders.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}>
+                        <td className="px-5 py-4 text-white/50 text-xs whitespace-nowrap">
+                          {new Date(order.created_at).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                        </td>
+                        <td className="px-5 py-4">
+                          <div className="space-y-1">
+                            {(order.items || []).map((item, i) => (
+                              <div key={i} className="text-xs text-white/70">
+                                <span className="font-semibold text-white">{item.name}</span>
+                                <span className="text-white/40 mx-1">·</span>
+                                <span className="text-blue-400">{item.flavor}</span>
+                                <span className="text-white/30 ml-1">×{item.qty}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </td>
+                        <td className="px-5 py-4">
+                          <span className="font-black text-sm" style={{ color: '#3b82f6' }}>
+                            R$ {Number(order.total).toFixed(2).replace('.', ',')}
+                          </span>
+                        </td>
+                        <td className="px-5 py-4">
+                          <span className="px-2.5 py-1 rounded-full text-xs font-semibold text-white/70"
+                            style={{ background: 'rgba(255,255,255,0.06)' }}>
+                            {order.payment}
+                          </span>
+                        </td>
+                        <td className="px-5 py-4 text-white/40 text-xs">{order.how_found}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ════ VENDAS TAB ════ */}
+        {activeTab === 'sales' && (
+          <div>
+            <div className="mb-8">
+              <h1 className="text-white text-2xl font-black tracking-tight">Painel de Vendas</h1>
+              <p className="text-white/30 text-sm mt-0.5">Resumo baseado nos pedidos registrados</p>
+            </div>
+
+            {ordersLoading ? (
+              <div className="flex items-center justify-center h-40">
+                <div className="w-7 h-7 rounded-full border-2 border-t-transparent animate-spin"
+                  style={{ borderColor: 'rgba(59,130,246,0.3)', borderTopColor: '#3b82f6' }} />
+              </div>
+            ) : (() => {
+              // Calcula métricas
+              const totalRevenue = orders.reduce((s, o) => s + Number(o.total), 0)
+              const totalOrders = orders.length
+              const avgTicket = totalOrders > 0 ? totalRevenue / totalOrders : 0
+
+              // Produtos mais pedidos
+              const productCount = {}
+              orders.forEach(o => (o.items || []).forEach(item => {
+                const key = item.name
+                productCount[key] = (productCount[key] || 0) + item.qty
+              }))
+              const topProducts = Object.entries(productCount)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 8)
+              const maxCount = topProducts[0]?.[1] || 1
+
+              // Pagamentos
+              const paymentCount = {}
+              orders.forEach(o => { paymentCount[o.payment] = (paymentCount[o.payment] || 0) + 1 })
+
+              // Como nos conheceu
+              const sourceCount = {}
+              orders.forEach(o => { sourceCount[o.how_found] = (sourceCount[o.how_found] || 0) + 1 })
+
+              return (
+                <div className="space-y-6">
+                  {/* Cards de resumo */}
+                  <div className="grid grid-cols-3 gap-4">
+                    {[
+                      { label: 'Total em Pedidos', value: `R$ ${totalRevenue.toFixed(2).replace('.', ',')}`, color: '#3b82f6' },
+                      { label: 'Nº de Pedidos', value: totalOrders, color: '#22c55e' },
+                      { label: 'Ticket Médio', value: `R$ ${avgTicket.toFixed(2).replace('.', ',')}`, color: '#f59e0b' },
+                    ].map(s => (
+                      <div key={s.label} className="rounded-2xl p-5"
+                        style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                        <p className="text-white/30 text-xs font-semibold uppercase tracking-wider">{s.label}</p>
+                        <p className="text-2xl font-black mt-1.5" style={{ color: s.color }}>{s.value}</p>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-6">
+                    {/* Produtos mais pedidos */}
+                    <div className="rounded-2xl p-5" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                      <h3 className="text-white font-bold text-sm mb-4">🏆 Produtos Mais Pedidos</h3>
+                      {topProducts.length === 0 ? (
+                        <p className="text-white/20 text-sm">Sem dados ainda.</p>
+                      ) : (
+                        <div className="space-y-3">
+                          {topProducts.map(([name, count]) => (
+                            <div key={name}>
+                              <div className="flex justify-between items-center mb-1">
+                                <span className="text-white/70 text-xs truncate flex-1 mr-2">{name}</span>
+                                <span className="text-blue-400 font-bold text-xs flex-shrink-0">{count}x</span>
+                              </div>
+                              <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.06)' }}>
+                                <div className="h-full rounded-full transition-all duration-500"
+                                  style={{
+                                    width: `${(count / maxCount) * 100}%`,
+                                    background: 'linear-gradient(90deg, #1d4ed8, #3b82f6)',
+                                  }} />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="space-y-4">
+                      {/* Formas de pagamento */}
+                      <div className="rounded-2xl p-5" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                        <h3 className="text-white font-bold text-sm mb-3">💳 Pagamentos</h3>
+                        <div className="space-y-2">
+                          {Object.entries(paymentCount).sort((a, b) => b[1] - a[1]).map(([method, count]) => (
+                            <div key={method} className="flex justify-between items-center">
+                              <span className="text-white/60 text-xs">{method}</span>
+                              <span className="px-2 py-0.5 rounded-full text-xs font-bold text-white/70"
+                                style={{ background: 'rgba(255,255,255,0.07)' }}>{count}</span>
+                            </div>
+                          ))}
+                          {Object.keys(paymentCount).length === 0 && <p className="text-white/20 text-xs">Sem dados.</p>}
+                        </div>
+                      </div>
+
+                      {/* Como nos conheceu */}
+                      <div className="rounded-2xl p-5" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                        <h3 className="text-white font-bold text-sm mb-3">📣 Como nos conheceu</h3>
+                        <div className="space-y-2">
+                          {Object.entries(sourceCount).sort((a, b) => b[1] - a[1]).map(([source, count]) => (
+                            <div key={source} className="flex justify-between items-center">
+                              <span className="text-white/60 text-xs">{source}</span>
+                              <span className="px-2 py-0.5 rounded-full text-xs font-bold text-white/70"
+                                style={{ background: 'rgba(255,255,255,0.07)' }}>{count}</span>
+                            </div>
+                          ))}
+                          {Object.keys(sourceCount).length === 0 && <p className="text-white/20 text-xs">Sem dados.</p>}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )
+            })()}
+          </div>
+        )}
+
+        {/* Edit / Create Modal */}
+        <Modal open={editTarget !== null} onClose={() => setEditTarget(null)}
+          title={editTarget?.id ? 'Editar Produto' : 'Novo Produto'}>
+          {editTarget !== null && (
+            <ProductForm initial={editTarget} onSave={handleSave} onCancel={() => setEditTarget(null)} saving={saving} />
+          )}
+        </Modal>
+
+        {/* Delete confirm */}
+        <Modal open={delTarget !== null} onClose={() => setDelTarget(null)} title="Confirmar Exclusão">
+          <p className="text-white/50 text-sm mb-6">
+            Excluir <span className="text-white font-semibold">"{delTarget?.name}"</span>? Esta ação é irreversível.
+          </p>
+          <div className="flex gap-3">
+            <button onClick={() => setDelTarget(null)}
+              className="flex-1 py-3 rounded-xl text-sm text-white/40 border border-white/[0.08] hover:border-white/20 transition-colors">Cancelar</button>
+            <button onClick={handleDelete}
+              className="flex-1 py-3 rounded-xl text-sm font-bold text-white transition-all hover:brightness-110"
+              style={{ background: 'linear-gradient(135deg, #dc2626, #ef4444)' }}>Excluir</button>
+          </div>
+        </Modal>
+      </main>
+
+    </div><aside
+      className="fixed top-0 left-0 h-full w-56 flex flex-col py-7 px-4 z-20"
+      style={{
+        background: 'rgba(8,8,11,0.95)',
+        borderRight: '1px solid rgba(255,255,255,0.06)',
+        backdropFilter: 'blur(20px)',
+      }}
+    >
+        <div className="flex items-center gap-2 px-2 mb-8">
+          <img
+            src="/Logo_pod.png"
+            alt="SmokePods"
+            className="w-7 h-7 object-contain flex-shrink-0"
+            style={{ filter: 'drop-shadow(0 0 5px rgba(59,130,246,0.5))' }} />
           <span className="font-black text-base tracking-tight flex items-center gap-1.5">
             <span style={{ color: '#9ca3af' }}>Smoke</span><span style={{ color: '#ffffff', textShadow: '0 0 12px #60a5fa, 0 0 24px #3b82f6' }}>Pods</span>
             <I.Logo />
@@ -469,15 +895,15 @@ export default function AdminPage() {
         <div className="flex-1 space-y-1">
           {[
             { id: 'products', label: '📦 Produtos' },
-            { id: 'orders',   label: '📋 Pedidos' },
-            { id: 'sales',    label: '📊 Vendas' },
+            { id: 'orders', label: '📋 Pedidos' },
+            { id: 'sales', label: '📊 Vendas' },
           ].map(tab => (
             <button
               key={tab.id}
               onClick={() => {
                 setActiveTab(tab.id)
                 if (tab.id === 'orders' || tab.id === 'sales') fetchOrders()
-              }}
+              } }
               className="w-full text-left px-3 py-2.5 rounded-xl text-sm font-semibold transition-all"
               style={{
                 background: activeTab === tab.id ? 'rgba(59,130,246,0.12)' : 'transparent',
@@ -504,7 +930,7 @@ export default function AdminPage() {
             <I.Logout /> Sair
           </button>
         </div>
-      </aside>
+      </aside></>
 
       {/* ── Main ────────────────────────────────────────────────────── */}
       <main className="ml-56 flex-1 p-8">
