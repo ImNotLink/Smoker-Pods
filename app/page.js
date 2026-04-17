@@ -303,7 +303,7 @@ export default function HomePage() {
   const [cartOpen, setCartOpen] = useState(false)
   const [search, setSearch] = useState('')
   const [flavorSearch, setFlavorSearch] = useState('')
-  const [sortBy, setSortBy] = useState('newest')
+  const [sortBy, setSortBy] = useState('price_asc')
   const [zoomImg, setZoomImg] = useState(null)
   const [zoomAlt, setZoomAlt] = useState('')
 
