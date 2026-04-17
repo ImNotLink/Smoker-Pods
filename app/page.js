@@ -115,7 +115,7 @@ function ProductCard({ pod, onAddToCart, onZoom }) {
         requestAnimationFrame(() => setPulsing(true))
       })
       setTimeout(() => setShowToast(false), 2200)
-      setTimeout(() => setPulsing(false), 950)
+      setTimeout(() => setPulsing(false), 1650)
       return
     }
     if (isSelectedOut) return
@@ -134,12 +134,16 @@ function ProductCard({ pod, onAddToCart, onZoom }) {
     <style>{`
       @keyframes flavorPulse {
         0%   { transform: scale(1);    box-shadow: 0 0 0 0 rgba(59,130,246,0); }
-        30%  { transform: scale(1.06); box-shadow: 0 0 0 6px rgba(59,130,246,0.25); }
-        60%  { transform: scale(1);    box-shadow: 0 0 0 0 rgba(59,130,246,0); }
-        80%  { transform: scale(1.04); box-shadow: 0 0 0 4px rgba(59,130,246,0.15); }
+        12%  { transform: scale(1.06); box-shadow: 0 0 0 6px rgba(59,130,246,0.3); }
+        24%  { transform: scale(1);    box-shadow: 0 0 0 0 rgba(59,130,246,0); }
+        36%  { transform: scale(1.06); box-shadow: 0 0 0 6px rgba(59,130,246,0.3); }
+        48%  { transform: scale(1);    box-shadow: 0 0 0 0 rgba(59,130,246,0); }
+        60%  { transform: scale(1.06); box-shadow: 0 0 0 6px rgba(59,130,246,0.25); }
+        72%  { transform: scale(1);    box-shadow: 0 0 0 0 rgba(59,130,246,0); }
+        84%  { transform: scale(1.04); box-shadow: 0 0 0 4px rgba(59,130,246,0.2); }
         100% { transform: scale(1);    box-shadow: 0 0 0 0 rgba(59,130,246,0); }
       }
-      .flavor-pulse { animation: flavorPulse 0.9s ease-out; }
+      .flavor-pulse { animation: flavorPulse 1.6s ease-out; }
     `}</style>
     <div
       className="group relative flex flex-col overflow-hidden rounded-[1.5rem] transition-all duration-300 hover:-translate-y-1"
@@ -194,27 +198,6 @@ function ProductCard({ pod, onAddToCart, onZoom }) {
         </div>
       </div>
 
-      {/* Toast: selecione um sabor */}
-      {showToast && (
-        <div
-          className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none"
-          style={{ borderRadius: '1.5rem' }}
-        >
-          <div
-            className="px-5 py-3 rounded-2xl text-white text-sm font-bold flex items-center gap-2"
-            style={{
-              background: 'rgba(10,12,20,0.95)',
-              border: '1px solid rgba(59,130,246,0.5)',
-              boxShadow: '0 0 30px rgba(59,130,246,0.25)',
-              backdropFilter: 'blur(10px)',
-            }}
-          >
-            <span style={{ color: '#60a5fa' }}>👆</span>
-            Selecione um sabor antes.
-          </div>
-        </div>
-      )}
-
       {/* Content */}
       <div className="flex flex-col gap-3 p-5">
         <h3 className="text-white font-bold text-xl tracking-tight">{pod.name}</h3>
@@ -261,7 +244,22 @@ function ProductCard({ pod, onAddToCart, onZoom }) {
           </div>
         </div>
 
-        {!selectedFlavor && !isGlobalOut && (
+        {/* Toast inline abaixo dos sabores */}
+        {showToast && (
+          <div
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-white"
+            style={{
+              background: 'rgba(10,14,26,0.97)',
+              border: '1px solid rgba(59,130,246,0.55)',
+              boxShadow: '0 0 18px rgba(59,130,246,0.2)',
+            }}
+          >
+            <span className="text-lg">👆</span>
+            Selecione um sabor antes.
+          </div>
+        )}
+
+        {!selectedFlavor && !isGlobalOut && !showToast && (
           <p className="text-white/25 text-xs">← Selecione um sabor para adicionar</p>
         )}
         {selectedFlavor && isSelectedOut && (
