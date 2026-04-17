@@ -109,9 +109,13 @@ function ProductCard({ pod, onAddToCart, onZoom }) {
     if (!selectedFlavor) {
       // Mostra toast e pulsa as tags de sabor
       setShowToast(true)
-      setPulsing(true)
+      setPulsing(false)
+      // força re-render para reiniciar animação mesmo se clicar várias vezes
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => setPulsing(true))
+      })
       setTimeout(() => setShowToast(false), 2200)
-      setTimeout(() => setPulsing(false), 900)
+      setTimeout(() => setPulsing(false), 950)
       return
     }
     if (isSelectedOut) return
@@ -275,7 +279,7 @@ function ProductCard({ pod, onAddToCart, onZoom }) {
               disabled={isGlobalOut || !selectedFlavor || qty >= selectedFlavorQty}
               className="w-9 h-11 flex items-center justify-center text-white/40 hover:text-white transition-colors font-bold disabled:opacity-30">+</button>
           </div>
-          <button onClick={handleAdd} disabled={!selectedFlavor || isGlobalOut || isSelectedOut}
+          <button onClick={handleAdd} disabled={isGlobalOut}
             className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl font-bold text-sm text-white transition-all active:scale-[0.97] disabled:opacity-40 disabled:cursor-not-allowed"
             style={{
               background: isGlobalOut ? 'rgba(255,255,255,0.05)' : added ? 'linear-gradient(135deg, #22c55e, #16a34a)' : 'linear-gradient(135deg, #1d4ed8, #3b82f6, #60a5fa)',
