@@ -77,6 +77,8 @@ function ProductCard({ pod, onAddToCart, onZoom }) {
   const [selectedFlavor, setSelectedFlavor] = useState('')
   const [qty, setQty] = useState(1)
   const [added, setAdded] = useState(false)
+  const [pulsing, setPulsing] = useState(false)
+  const [showToast, setShowToast] = useState(false)
 
   const flavorStock = pod.flavor_stock || {}
   const hasFlavorStock = Object.keys(flavorStock).length > 0
@@ -103,7 +105,16 @@ function ProductCard({ pod, onAddToCart, onZoom }) {
   }
 
   function handleAdd() {
-    if (!selectedFlavor || isGlobalOut || isSelectedOut) return
+    if (isGlobalOut) return
+    if (!selectedFlavor) {
+      // Mostra toast e pulsa as tags de sabor
+      setShowToast(true)
+      setPulsing(true)
+      setTimeout(() => setShowToast(false), 2200)
+      setTimeout(() => setPulsing(false), 900)
+      return
+    }
+    if (isSelectedOut) return
     onAddToCart({ ...pod, selectedFlavor, qty, unitPrice: price })
     setAdded(true)
     setSelectedFlavor('')
@@ -115,8 +126,19 @@ function ProductCard({ pod, onAddToCart, onZoom }) {
   const stockLabel = selectedFlavorQty === 1 ? 'restante' : 'restantes'
 
   return (
+    <>
+    <style>{`
+      @keyframes flavorPulse {
+        0%   { transform: scale(1);    box-shadow: 0 0 0 0 rgba(59,130,246,0); }
+        30%  { transform: scale(1.06); box-shadow: 0 0 0 6px rgba(59,130,246,0.25); }
+        60%  { transform: scale(1);    box-shadow: 0 0 0 0 rgba(59,130,246,0); }
+        80%  { transform: scale(1.04); box-shadow: 0 0 0 4px rgba(59,130,246,0.15); }
+        100% { transform: scale(1);    box-shadow: 0 0 0 0 rgba(59,130,246,0); }
+      }
+      .flavor-pulse { animation: flavorPulse 0.9s ease-out; }
+    `}</style>
     <div
-      className="group flex flex-col overflow-hidden rounded-[1.5rem] transition-all duration-300 hover:-translate-y-1"
+      className="group relative flex flex-col overflow-hidden rounded-[1.5rem] transition-all duration-300 hover:-translate-y-1"
       style={{
         background: 'rgba(255,255,255,0.04)',
         border: '1px solid rgba(255,255,255,0.08)',
@@ -168,6 +190,27 @@ function ProductCard({ pod, onAddToCart, onZoom }) {
         </div>
       </div>
 
+      {/* Toast: selecione um sabor */}
+      {showToast && (
+        <div
+          className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none"
+          style={{ borderRadius: '1.5rem' }}
+        >
+          <div
+            className="px-5 py-3 rounded-2xl text-white text-sm font-bold flex items-center gap-2"
+            style={{
+              background: 'rgba(10,12,20,0.95)',
+              border: '1px solid rgba(59,130,246,0.5)',
+              boxShadow: '0 0 30px rgba(59,130,246,0.25)',
+              backdropFilter: 'blur(10px)',
+            }}
+          >
+            <span style={{ color: '#60a5fa' }}>👆</span>
+            Selecione um sabor antes.
+          </div>
+        </div>
+      )}
+
       {/* Content */}
       <div className="flex flex-col gap-3 p-5">
         <h3 className="text-white font-bold text-xl tracking-tight">{pod.name}</h3>
@@ -186,7 +229,7 @@ function ProductCard({ pod, onAddToCart, onZoom }) {
           <p className="text-white/30 text-xs mb-2 font-medium">
             Escolha o sabor{selectedFlavor ? <span className="text-blue-400/70"> — clique para desmarcar</span> : ''}
           </p>
-          <div className="flex flex-wrap gap-1.5">
+          <div className={`flex flex-wrap gap-1.5 rounded-xl transition-all ${pulsing ? 'flavor-pulse' : ''}`}>
             {pod.flavors.map(f => {
               const fQty = getFlavorQty(f)
               const fOut = fQty === 0
@@ -244,6 +287,7 @@ function ProductCard({ pod, onAddToCart, onZoom }) {
         </div>
       </div>
     </div>
+    </>
   )
 }
 
