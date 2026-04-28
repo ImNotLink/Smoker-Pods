@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import Cart from '@/components/Cart'
 
-const CITY_OPTIONS = ['Buriticupu', 'Imperatriz', 'Rondon do Pará']
+const CITIES = ['Buriticupu', 'Imperatriz', 'Rondon do Pará']
 
 // ─── Icons ─────────────────────────────────────────────────────────────────────
 function LogoIcon() {
@@ -42,33 +42,173 @@ function WAFloatIcon() {
   )
 }
 
+// ─── City Selector Modal ──────────────────────────────────────────────────────
+function CityModal({ onSelect }) {
+  return (
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4"
+      style={{ background: 'rgba(0,0,0,0.92)', backdropFilter: 'blur(12px)' }}>
+      <div className="w-full max-w-sm">
+        {/* Logo */}
+        <div className="flex flex-col items-center mb-8">
+          <img src="/Logo_pod.png" alt="SmokePods" className="w-16 h-16 object-contain mb-4"
+            style={{ filter: 'drop-shadow(0 0 16px rgba(59,130,246,0.6))' }} />
+          <div className="flex items-center gap-2">
+            <span className="font-black text-2xl" style={{ color: '#9ca3af' }}>Smoke</span>
+            <span className="font-black text-2xl" style={{ color: '#fff', textShadow: '0 0 16px #60a5fa, 0 0 32px #3b82f6' }}>Pods</span>
+            <LogoIcon />
+          </div>
+          <p className="text-white/40 text-sm mt-2">Selecione sua cidade para continuar</p>
+        </div>
+
+        {/* City buttons */}
+        <div className="space-y-3">
+          {CITIES.map(city => (
+            <button
+              key={city}
+              onClick={() => onSelect(city)}
+              className="w-full py-4 rounded-2xl font-bold text-white text-base transition-all hover:scale-[1.02] active:scale-[0.98]"
+              style={{
+                background: 'rgba(255,255,255,0.05)',
+                border: '1px solid rgba(255,255,255,0.12)',
+                backdropFilter: 'blur(10px)',
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.background = 'rgba(59,130,246,0.15)'
+                e.currentTarget.style.border = '1px solid rgba(59,130,246,0.5)'
+                e.currentTarget.style.boxShadow = '0 0 20px rgba(59,130,246,0.2)'
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.background = 'rgba(255,255,255,0.05)'
+                e.currentTarget.style.border = '1px solid rgba(255,255,255,0.12)'
+                e.currentTarget.style.boxShadow = 'none'
+              }}
+            >
+              📍 {city}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── Image Zoom Modal ─────────────────────────────────────────────────────────
 function ImageZoomModal({ src, alt, onClose }) {
   if (!src) return null
   return (
-    <div
-      className="fixed inset-0 z-[100] flex items-center justify-center p-4"
-      onClick={onClose}
-    >
-      <div
-        className="absolute inset-0"
-        style={{ background: 'rgba(0,0,0,0.92)', backdropFilter: 'blur(10px)' }}
-      />
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" onClick={onClose}>
+      <div className="absolute inset-0" style={{ background: 'rgba(0,0,0,0.92)', backdropFilter: 'blur(10px)' }} />
       <div className="relative z-10 max-w-lg w-full">
-        <button
-          onClick={onClose}
+        <button onClick={onClose}
           className="absolute -top-4 -right-4 w-9 h-9 rounded-full flex items-center justify-center text-white/60 hover:text-white transition-colors z-20"
-          style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.15)' }}
-        >
-          ✕
-        </button>
-        <img
-          src={src}
-          alt={alt}
+          style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.15)' }}>✕</button>
+        <img src={src} alt={alt}
           className="w-full h-auto rounded-2xl object-contain max-h-[80vh]"
           style={{ boxShadow: '0 0 60px rgba(59,130,246,0.2)' }}
-          onClick={e => e.stopPropagation()}
-        />
+          onClick={e => e.stopPropagation()} />
+      </div>
+    </div>
+  )
+}
+
+// ─── Flavor Picker Modal ──────────────────────────────────────────────────────
+// Aparece quando cliente clica em "Adicionar ao Carrinho" sem sabor selecionado
+function FlavorModal({ pod, onConfirm, onClose }) {
+  const [selected, setSelected] = useState('')
+  const [qty, setQty] = useState(1)
+
+  const flavorStock = pod.flavor_stock || {}
+  const hasFlavorStock = Object.keys(flavorStock).length > 0
+  function getQty(f) { return hasFlavorStock ? (flavorStock[f] ?? 0) : pod.stock_qty }
+  const selectedQty = selected ? getQty(selected) : 0
+  const price = pod.on_sale && pod.promo_price ? pod.promo_price : pod.price
+
+  return (
+    <div className="fixed inset-0 z-[90] flex items-end sm:items-center justify-center p-0 sm:p-4"
+      onClick={onClose}>
+      <div className="absolute inset-0" style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(6px)' }} />
+      <div
+        className="relative z-10 w-full sm:max-w-md rounded-t-[2rem] sm:rounded-[2rem] p-6"
+        style={{
+          background: 'rgba(10,12,20,0.98)',
+          border: '1px solid rgba(255,255,255,0.1)',
+          boxShadow: '0 -20px 60px rgba(0,0,0,0.6)',
+        }}
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Handle bar mobile */}
+        <div className="w-10 h-1 rounded-full bg-white/20 mx-auto mb-5 sm:hidden" />
+
+        <div className="flex items-start justify-between mb-4">
+          <div>
+            <h3 className="text-white font-bold text-lg">{pod.name}</h3>
+            <p className="text-blue-400 font-black text-xl mt-1">
+              R$ {price.toFixed(2).replace('.', ',')}
+            </p>
+          </div>
+          <button onClick={onClose}
+            className="w-8 h-8 flex items-center justify-center text-white/30 hover:text-white transition-colors text-xl">✕</button>
+        </div>
+
+        <p className="text-white/40 text-sm mb-3">Escolha o sabor:</p>
+
+        {/* Flavor grid */}
+        <div className="flex flex-wrap gap-2 mb-5">
+          {pod.flavors.map(f => {
+            const fQty = getQty(f)
+            const fOut = fQty === 0
+            const fLow = fQty > 0 && fQty <= 3
+            const isSel = selected === f
+            return (
+              <button key={f}
+                onClick={() => { if (!fOut) { setSelected(prev => prev === f ? '' : f); setQty(1) } }}
+                disabled={fOut}
+                className="px-3 py-1.5 rounded-full text-sm font-medium transition-all"
+                style={{
+                  background: isSel ? 'rgba(59,130,246,0.2)' : fOut ? 'rgba(255,255,255,0.03)' : 'rgba(255,255,255,0.06)',
+                  border: isSel ? '1px solid rgba(59,130,246,0.7)' : fOut ? '1px solid rgba(255,255,255,0.06)' : '1px solid rgba(255,255,255,0.15)',
+                  color: isSel ? '#60a5fa' : fOut ? 'rgba(255,255,255,0.2)' : fLow ? '#fcd34d' : 'rgba(255,255,255,0.7)',
+                  cursor: fOut ? 'not-allowed' : 'pointer',
+                  textDecoration: fOut ? 'line-through' : 'none',
+                }}>
+                {f}
+                {isSel && ' ✓'}
+                {fLow && !fOut && <span className="ml-1 text-orange-400 text-xs">({fQty})</span>}
+                {fOut && <span className="ml-1 text-red-400/50 text-xs">✗</span>}
+              </button>
+            )
+          })}
+        </div>
+
+        {/* Qty row */}
+        {selected && (
+          <div className="flex items-center gap-3 mb-5">
+            <span className="text-white/40 text-sm">Quantidade:</span>
+            <div className="flex items-center rounded-xl overflow-hidden"
+              style={{ border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.04)' }}>
+              <button onClick={() => setQty(q => Math.max(1, q - 1))}
+                className="w-9 h-9 flex items-center justify-center text-white/50 hover:text-white font-bold">−</button>
+              <span className="w-8 text-center text-white font-semibold text-sm">{qty}</span>
+              <button onClick={() => setQty(q => Math.min(selectedQty, q + 1))}
+                disabled={qty >= selectedQty}
+                className="w-9 h-9 flex items-center justify-center text-white/50 hover:text-white font-bold disabled:opacity-30">+</button>
+            </div>
+            {selectedQty <= 3 && (
+              <span className="text-orange-400 text-xs">⚡ {selectedQty} {selectedQty === 1 ? 'restante' : 'restantes'}</span>
+            )}
+          </div>
+        )}
+
+        <button
+          onClick={() => { if (selected) { onConfirm({ selectedFlavor: selected, qty, unitPrice: price }); onClose() } }}
+          disabled={!selected}
+          className="w-full py-3.5 rounded-xl font-bold text-white text-sm transition-all hover:brightness-110 active:scale-[0.98] disabled:opacity-30 disabled:cursor-not-allowed"
+          style={{
+            background: selected ? 'linear-gradient(135deg, #1d4ed8, #3b82f6)' : 'rgba(255,255,255,0.05)',
+            boxShadow: selected ? '0 0 20px rgba(59,130,246,0.3)' : 'none',
+          }}>
+          {selected ? `Adicionar ao Carrinho` : 'Selecione um sabor'}
+        </button>
       </div>
     </div>
   )
@@ -76,211 +216,127 @@ function ImageZoomModal({ src, alt, onClose }) {
 
 // ─── Product Card ─────────────────────────────────────────────────────────────
 function ProductCard({ pod, onAddToCart, onZoom }) {
-  const [selectedFlavor, setSelectedFlavor] = useState('')
-  const [qty, setQty] = useState(1)
+  const [showFlavorModal, setShowFlavorModal] = useState(false)
   const [added, setAdded] = useState(false)
-  const [pulsing, setPulsing] = useState(false)
-  const [showToast, setShowToast] = useState(false)
 
   const flavorStock = pod.flavor_stock || {}
   const hasFlavorStock = Object.keys(flavorStock).length > 0
-
-  function getFlavorQty(flavor) {
-    if (hasFlavorStock) return flavorStock[flavor] ?? 0
-    return pod.stock_qty
-  }
+  function getFlavorQty(f) { return hasFlavorStock ? (flavorStock[f] ?? 0) : pod.stock_qty }
 
   const totalStock = hasFlavorStock
     ? Object.values(flavorStock).reduce((a, b) => a + b, 0)
     : pod.stock_qty
 
   const isGlobalOut = totalStock === 0
-  const selectedFlavorQty = selectedFlavor ? getFlavorQty(selectedFlavor) : 0
-  const isSelectedOut = selectedFlavor ? selectedFlavorQty === 0 : false
-  const isSelectedLow = selectedFlavor ? selectedFlavorQty > 0 && selectedFlavorQty <= 3 : false
   const price = pod.on_sale && pod.promo_price ? pod.promo_price : pod.price
 
-  function toggleFlavor(flavor) {
-    if (isGlobalOut || getFlavorQty(flavor) === 0) return
-    setSelectedFlavor(prev => prev === flavor ? '' : flavor)
-    setQty(1)
+  // Sabores disponíveis (estoque > 0)
+  const availableFlavors = pod.flavors.filter(f => getFlavorQty(f) > 0)
+
+  function handleAddClick() {
+    if (isGlobalOut) return
+    setShowFlavorModal(true)
   }
 
-  function handleAdd() {
-    if (isGlobalOut) return
-    if (!selectedFlavor) {
-      // Mostra toast e pulsa as tags de sabor
-      setShowToast(true)
-      setPulsing(false)
-      // força re-render para reiniciar animação mesmo se clicar várias vezes
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => setPulsing(true))
-      })
-      setTimeout(() => setShowToast(false), 2200)
-      setTimeout(() => setPulsing(false), 1650)
-      return
-    }
-    if (isSelectedOut) return
-    onAddToCart({ ...pod, selectedFlavor, qty, unitPrice: price })
+  function handleConfirm({ selectedFlavor, qty, unitPrice }) {
+    onAddToCart({ ...pod, selectedFlavor, qty, unitPrice })
     setAdded(true)
-    setSelectedFlavor('')
-    setQty(1)
     setTimeout(() => setAdded(false), 1800)
   }
 
-  // Singular/plural correto
-  const stockLabel = selectedFlavorQty === 1 ? 'restante' : 'restantes'
-
   return (
     <>
-    <style>{`
-      @keyframes flavorPulse {
-        0%   { transform: scale(1);    box-shadow: 0 0 0 0 rgba(59,130,246,0); }
-        12%  { transform: scale(1.06); box-shadow: 0 0 0 6px rgba(59,130,246,0.3); }
-        24%  { transform: scale(1);    box-shadow: 0 0 0 0 rgba(59,130,246,0); }
-        36%  { transform: scale(1.06); box-shadow: 0 0 0 6px rgba(59,130,246,0.3); }
-        48%  { transform: scale(1);    box-shadow: 0 0 0 0 rgba(59,130,246,0); }
-        60%  { transform: scale(1.06); box-shadow: 0 0 0 6px rgba(59,130,246,0.25); }
-        72%  { transform: scale(1);    box-shadow: 0 0 0 0 rgba(59,130,246,0); }
-        84%  { transform: scale(1.04); box-shadow: 0 0 0 4px rgba(59,130,246,0.2); }
-        100% { transform: scale(1);    box-shadow: 0 0 0 0 rgba(59,130,246,0); }
-      }
-      .flavor-pulse { animation: flavorPulse 1.6s ease-out; }
-    `}</style>
-    <div
-      className="group relative flex flex-col overflow-hidden rounded-[1.5rem] transition-all duration-300 hover:-translate-y-1"
-      style={{
-        background: 'rgba(255,255,255,0.04)',
-        border: '1px solid rgba(255,255,255,0.08)',
-        boxShadow: '0 4px 24px rgba(0,0,0,0.3)',
-      }}
-    >
-      {/* Image */}
       <div
-        className="relative overflow-hidden cursor-zoom-in"
-        style={{ background: 'linear-gradient(160deg, #080c14 0%, #0d1220 100%)', minHeight: '260px' }}
-        onClick={() => pod.image_url && onZoom(pod.image_url, pod.name)}
+        className="group relative flex flex-col overflow-hidden rounded-[1.5rem] transition-all duration-300 hover:-translate-y-1"
+        style={{
+          background: 'rgba(255,255,255,0.04)',
+          border: '1px solid rgba(255,255,255,0.08)',
+          boxShadow: '0 4px 24px rgba(0,0,0,0.3)',
+        }}
       >
-        {pod.on_sale && (
-          <div className="absolute top-3 left-3 z-10 px-3 py-1 rounded-full text-xs font-bold text-white"
-            style={{ background: 'linear-gradient(135deg, #1d4ed8, #3b82f6)' }}>
-            PROMOÇÃO
-          </div>
-        )}
-        {selectedFlavor && isSelectedLow && (
-          <div className="absolute top-3 right-3 z-10 px-3 py-1 rounded-full text-xs font-bold text-orange-300"
-            style={{ background: 'rgba(251,146,60,0.15)', border: '1px solid rgba(251,146,60,0.3)' }}>
-            ⚡ Apenas {selectedFlavorQty} {stockLabel}
-          </div>
-        )}
-        {isGlobalOut && (
-          <div className="absolute top-3 right-3 z-10 px-2.5 py-1 rounded-full text-xs font-bold text-red-400"
-            style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.25)' }}>
-            Esgotado
-          </div>
-        )}
-        {pod.image_url && (
-          <div className="absolute bottom-2 right-2 z-10 px-2 py-1 rounded-lg text-white/30 text-xs"
-            style={{ background: 'rgba(0,0,0,0.4)' }}>
-            🔍
-          </div>
-        )}
-        <div className="h-[260px] flex items-center justify-center p-6">
-          {pod.image_url ? (
-            <img
-              src={pod.image_url}
-              alt={pod.name}
-              className="h-full w-auto max-h-[220px] object-contain transition-transform duration-500 group-hover:scale-105"
-              style={{ filter: isGlobalOut ? 'grayscale(70%) opacity(0.5)' : 'drop-shadow(0 20px 40px rgba(59,130,246,0.2))' }}
-            />
-          ) : (
-            <div className="w-32 h-32 rounded-3xl flex items-center justify-center text-4xl"
-              style={{ background: 'rgba(59,130,246,0.05)' }}>🌫️</div>
+        {/* Image */}
+        <div className="relative overflow-hidden cursor-zoom-in"
+          style={{ background: 'linear-gradient(160deg, #080c14 0%, #0d1220 100%)', minHeight: '260px' }}
+          onClick={() => pod.image_url && onZoom(pod.image_url, pod.name)}>
+          {pod.on_sale && (
+            <div className="absolute top-3 left-3 z-10 px-3 py-1 rounded-full text-xs font-bold text-white"
+              style={{ background: 'linear-gradient(135deg, #1d4ed8, #3b82f6)' }}>PROMOÇÃO</div>
           )}
-        </div>
-      </div>
-
-      {/* Content */}
-      <div className="flex flex-col gap-3 p-5">
-        <h3 className="text-white font-bold text-xl tracking-tight">{pod.name}</h3>
-
-        <div className="flex items-baseline gap-2">
-          <span className="text-2xl font-black" style={{ color: '#3b82f6' }}>
-            R$ {price.toFixed(2).replace('.', ',')}
-          </span>
-          {pod.on_sale && pod.promo_price && (
-            <span className="text-sm text-white/30 line-through">R$ {pod.price.toFixed(2).replace('.', ',')}</span>
+          {isGlobalOut && (
+            <div className="absolute top-3 right-3 z-10 px-2.5 py-1 rounded-full text-xs font-bold text-red-400"
+              style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.25)' }}>Esgotado</div>
           )}
-        </div>
-
-        {/* Flavor tags */}
-        <div>
-          <p className="text-white/30 text-xs mb-2 font-medium">
-            Escolha o sabor{selectedFlavor ? <span className="text-blue-400/70"> — clique para desmarcar</span> : ''}
-          </p>
-          <div className={`flex flex-wrap gap-1.5 rounded-xl transition-all ${pulsing ? 'flavor-pulse' : ''}`}>
-            {pod.flavors.map(f => {
-              const fQty = getFlavorQty(f)
-              const fOut = fQty === 0
-              const fLow = fQty > 0 && fQty <= 3
-              const isSelected = selectedFlavor === f
-              return (
-                <button key={f} onClick={() => toggleFlavor(f)}
-                  disabled={isGlobalOut || fOut}
-                  className="px-3 py-1 rounded-full text-xs transition-all"
-                  style={{
-                    background: isSelected ? 'rgba(59,130,246,0.2)' : fOut ? 'rgba(255,255,255,0.03)' : 'transparent',
-                    border: isSelected ? '1px solid rgba(59,130,246,0.7)' : fOut ? '1px solid rgba(255,255,255,0.06)' : '1px solid rgba(255,255,255,0.15)',
-                    color: isSelected ? '#60a5fa' : fOut ? 'rgba(255,255,255,0.2)' : fLow ? '#fcd34d' : 'rgba(255,255,255,0.6)',
-                    cursor: fOut || isGlobalOut ? 'not-allowed' : 'pointer',
-                    textDecoration: fOut ? 'line-through' : 'none',
-                  }}
-                >
-                  {f}
-                  {fLow && !fOut && <span className="ml-1 text-orange-400 text-[10px]">({fQty})</span>}
-                  {fOut && <span className="ml-1 text-red-400/60 text-[10px]">✗</span>}
-                  {isSelected && <span className="ml-1 text-blue-400 text-[10px]">✓</span>}
-                </button>
-              )
-            })}
+          {!isGlobalOut && availableFlavors.length > 0 && availableFlavors.every(f => getFlavorQty(f) <= 3) && (
+            <div className="absolute top-3 right-3 z-10 px-2.5 py-1 rounded-full text-xs font-bold text-orange-300"
+              style={{ background: 'rgba(251,146,60,0.15)', border: '1px solid rgba(251,146,60,0.3)' }}>
+              ⚡ Últimas unidades
+            </div>
+          )}
+          {pod.image_url && (
+            <div className="absolute bottom-2 right-2 z-10 px-2 py-1 rounded-lg text-white/30 text-xs"
+              style={{ background: 'rgba(0,0,0,0.4)' }}>🔍</div>
+          )}
+          <div className="h-[260px] flex items-center justify-center p-6">
+            {pod.image_url ? (
+              <img src={pod.image_url} alt={pod.name}
+                className="h-full w-auto max-h-[220px] object-contain transition-transform duration-500 group-hover:scale-105"
+                style={{ filter: isGlobalOut ? 'grayscale(70%) opacity(0.5)' : 'drop-shadow(0 20px 40px rgba(59,130,246,0.2))' }} />
+            ) : (
+              <div className="w-32 h-32 rounded-3xl flex items-center justify-center text-4xl"
+                style={{ background: 'rgba(59,130,246,0.05)' }}>🌫️</div>
+            )}
           </div>
         </div>
 
-        {/* Toast inline abaixo dos sabores */}
-        {showToast && (
-          <div
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-white"
-            style={{
-              background: 'rgba(10,14,26,0.97)',
-              border: '1px solid rgba(59,130,246,0.55)',
-              boxShadow: '0 0 18px rgba(59,130,246,0.2)',
-            }}
-          >
-            <span className="text-lg">👆</span>
-            Selecione um sabor antes.
-          </div>
-        )}
+        {/* Content */}
+        <div className="flex flex-col gap-3 p-5">
+          <h3 className="text-white font-bold text-xl tracking-tight">{pod.name}</h3>
 
-        {!selectedFlavor && !isGlobalOut && !showToast && (
-          <p className="text-white/25 text-xs">← Selecione um sabor para adicionar</p>
-        )}
-        {selectedFlavor && isSelectedOut && (
-          <p className="text-red-400/70 text-xs">Este sabor está esgotado</p>
-        )}
-
-        {/* Qty + Add */}
-        <div className="flex gap-2 mt-1">
-          <div className="flex items-center rounded-xl overflow-hidden flex-shrink-0"
-            style={{ border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.04)' }}>
-            <button onClick={() => setQty(q => Math.max(1, q - 1))} disabled={isGlobalOut}
-              className="w-9 h-11 flex items-center justify-center text-white/40 hover:text-white transition-colors font-bold disabled:opacity-30">−</button>
-            <span className="w-8 text-center text-white font-semibold text-sm">{qty}</span>
-            <button onClick={() => setQty(q => Math.min(selectedFlavorQty || pod.stock_qty, q + 1))}
-              disabled={isGlobalOut || !selectedFlavor || qty >= selectedFlavorQty}
-              className="w-9 h-11 flex items-center justify-center text-white/40 hover:text-white transition-colors font-bold disabled:opacity-30">+</button>
+          <div className="flex items-baseline gap-2">
+            <span className="text-2xl font-black" style={{ color: '#3b82f6' }}>
+              R$ {price.toFixed(2).replace('.', ',')}
+            </span>
+            {pod.on_sale && pod.promo_price && (
+              <span className="text-sm text-white/30 line-through">R$ {pod.price.toFixed(2).replace('.', ',')}</span>
+            )}
           </div>
-          <button onClick={handleAdd} disabled={isGlobalOut}
-            className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl font-bold text-sm text-white transition-all active:scale-[0.97] disabled:opacity-40 disabled:cursor-not-allowed"
+
+          {/* Preview de sabores disponíveis (só leitura) */}
+          {!isGlobalOut && (
+            <div className="flex flex-wrap gap-1">
+              {availableFlavors.slice(0, 4).map(f => {
+                const fQty = getFlavorQty(f)
+                const fLow = fQty <= 3
+                return (
+                  <span key={f} className="px-2.5 py-1 rounded-full text-xs"
+                    style={{
+                      background: 'rgba(255,255,255,0.05)',
+                      border: '1px solid rgba(255,255,255,0.1)',
+                      color: fLow ? '#fcd34d' : 'rgba(255,255,255,0.5)',
+                    }}>
+                    {f}
+                    {fLow && <span className="ml-1 text-orange-400 text-[10px]">({fQty})</span>}
+                  </span>
+                )
+              })}
+              {availableFlavors.length > 4 && (
+                <span className="px-2.5 py-1 rounded-full text-xs text-white/30"
+                  style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+                  +{availableFlavors.length - 4} mais
+                </span>
+              )}
+            </div>
+          )}
+
+          {isGlobalOut && (
+            <p className="text-red-400/60 text-xs">Produto temporariamente indisponível</p>
+          )}
+
+          {/* Add button */}
+          <button
+            onClick={handleAddClick}
+            disabled={isGlobalOut}
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm text-white transition-all active:scale-[0.97] mt-1 disabled:opacity-40 disabled:cursor-not-allowed"
             style={{
               background: isGlobalOut ? 'rgba(255,255,255,0.05)' : added ? 'linear-gradient(135deg, #22c55e, #16a34a)' : 'linear-gradient(135deg, #1d4ed8, #3b82f6, #60a5fa)',
               boxShadow: (!isGlobalOut && !added) ? '0 0 20px rgba(59,130,246,0.3)' : 'none',
@@ -290,46 +346,58 @@ function ProductCard({ pod, onAddToCart, onZoom }) {
           </button>
         </div>
       </div>
-    </div>
+
+      {/* Flavor picker modal */}
+      {showFlavorModal && (
+        <FlavorModal
+          pod={pod}
+          onConfirm={handleConfirm}
+          onClose={() => setShowFlavorModal(false)}
+        />
+      )}
     </>
   )
 }
 
 // ─── Main Page ─────────────────────────────────────────────────────────────────
-const WHATSAPP_NUMBER = '559991036173'
-
 export default function HomePage() {
   const [pods, setPods] = useState([])
   const [loading, setLoading] = useState(true)
   const [cartItems, setCartItems] = useState([])
   const [cartOpen, setCartOpen] = useState(false)
   const [search, setSearch] = useState('')
-  const [selectedCity, setSelectedCity] = useState('')
+  const [flavorSearch, setFlavorSearch] = useState('')
   const [sortBy, setSortBy] = useState('price_asc')
   const [zoomImg, setZoomImg] = useState(null)
   const [zoomAlt, setZoomAlt] = useState('')
+  const [selectedCity, setSelectedCity] = useState(null)
 
   useEffect(() => {
+    // Recupera cidade salva
+    const saved = localStorage.getItem('smokepods_city')
+    if (saved && CITIES.includes(saved)) setSelectedCity(saved)
+  }, [])
+
+  useEffect(() => {
+    if (!selectedCity) return
     fetchPods()
     const channel = supabase
       .channel('pods-changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'pods' }, fetchPods)
       .subscribe()
     return () => supabase.removeChannel(channel)
-  }, [])
-
-  useEffect(() => {
-    const savedCity = window.localStorage.getItem('smokepods-city')
-    if (savedCity && CITY_OPTIONS.includes(savedCity)) {
-      setSelectedCity(savedCity)
-    }
-  }, [])
+  }, [selectedCity])
 
   async function fetchPods() {
     const { data, error } = await supabase.from('pods').select('*').order('created_at', { ascending: false })
     if (error) console.error('[Smoke Pods] Erro:', error.message)
     if (data) setPods(data)
     setLoading(false)
+  }
+
+  function handleCitySelect(city) {
+    localStorage.setItem('smokepods_city', city)
+    setSelectedCity(city)
   }
 
   const addToCart = useCallback((item) => {
@@ -342,14 +410,17 @@ export default function HomePage() {
     setCartOpen(true)
   }, [])
 
-  // Filter + sort
-  const cityFiltered = selectedCity ? pods.filter(p => p.city === selectedCity) : []
-  let filtered = cityFiltered.filter(p => p.name.toLowerCase().includes(search.toLowerCase()))
+  // Filtra por cidade + busca + ordenação
+  let filtered = pods.filter(p => {
+    const cityMatch = !selectedCity || !p.cities || p.cities.length === 0 || p.cities.includes(selectedCity)
+    const nameMatch = p.name.toLowerCase().includes(search.toLowerCase())
+    const flavorMatch = flavorSearch === '' || p.flavors.some(f => f.toLowerCase().includes(flavorSearch.toLowerCase()))
+    return cityMatch && nameMatch && flavorMatch
+  })
 
   if (sortBy === 'price_asc') filtered = [...filtered].sort((a, b) => (a.promo_price || a.price) - (b.promo_price || b.price))
   else if (sortBy === 'price_desc') filtered = [...filtered].sort((a, b) => (b.promo_price || b.price) - (a.promo_price || a.price))
   else if (sortBy === 'promo') filtered = [...filtered].sort((a, b) => (b.on_sale ? 1 : 0) - (a.on_sale ? 1 : 0))
-  // 'newest' = default order from Supabase
 
   const cartCount = cartItems.reduce((s, i) => s + i.qty, 0)
 
@@ -360,38 +431,14 @@ export default function HomePage() {
     { value: 'promo', label: '🔥 Promoções' },
   ]
 
-  const availableFlavors = Array.from(new Set(cityFiltered.flatMap(p => p.flavors).filter(Boolean)))
+  // Mostra seletor de cidade se não selecionada
+  if (!selectedCity) return <CityModal onSelect={handleCitySelect} />
 
   return (
     <div className="min-h-screen" style={{ background: '#050505' }}>
 
-      {!selectedCity && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/95">
-          <div className="w-full max-w-lg rounded-[2rem] border border-white/[0.08] bg-slate-950/95 p-8 text-center">
-            <h1 className="text-white text-3xl font-black mb-4">Escolha sua cidade</h1>
-            <p className="text-white/50 mb-8">Para mostrar apenas os pods disponíveis na sua região.</p>
-            <div className="grid gap-3 sm:grid-cols-3">
-              {CITY_OPTIONS.map(city => (
-                <button
-                  key={city}
-                  type="button"
-                  onClick={() => {
-                    setSelectedCity(city)
-                    window.localStorage.setItem('smokepods-city', city)
-                  }}
-                  className="rounded-3xl px-5 py-4 text-sm font-bold text-white transition-all hover:brightness-110"
-                  style={{ background: 'rgba(59,130,246,0.15)', border: '1px solid rgba(59,130,246,0.25)' }}
-                >
-                  {city}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ── Header ────────────────────────────────────────────────── */}
-      <header className="sticky top-0 z-30 flex items-center justify-between px-6 py-4"
+      {/* Header */}
+      <header className="sticky top-0 z-30 flex items-center justify-between px-4 sm:px-6 py-4"
         style={{
           background: 'rgba(5,5,5,0.85)',
           backdropFilter: 'blur(20px)',
@@ -399,68 +446,73 @@ export default function HomePage() {
           borderBottom: '1px solid rgba(255,255,255,0.08)',
         }}>
         <a href="/" className="flex items-center gap-2 no-underline">
-          <img src="/Logo_pod.png" alt="SmokePods" className="w-8 h-8 object-contain"
+          <img src="/Logo_pod.png" alt="SmokePods" className="w-7 h-7 sm:w-8 sm:h-8 object-contain"
             style={{ filter: 'drop-shadow(0 0 6px rgba(59,130,246,0.5))' }} />
-          <span className="font-black text-lg tracking-tight flex items-center gap-1.5" style={{ letterSpacing: '-0.02em' }}>
+          <span className="font-black text-base sm:text-lg tracking-tight flex items-center gap-1" style={{ letterSpacing: '-0.02em' }}>
             <span style={{ color: '#9ca3af' }}>Smoke</span>
-            <span style={{ color: '#ffffff', textShadow: '0 0 12px #60a5fa, 0 0 24px #3b82f6' }}>Pods</span>
+            <span style={{ color: '#fff', textShadow: '0 0 12px #60a5fa, 0 0 24px #3b82f6' }}>Pods</span>
             <LogoIcon />
           </span>
         </a>
-        <div className="flex items-center gap-3">
-          <a href="/admin" className="flex items-center gap-1.5 text-white/40 hover:text-white/70 transition-colors text-sm">
+
+        <div className="flex items-center gap-2 sm:gap-3">
+          {/* Cidade selecionada */}
+          <button
+            onClick={() => { localStorage.removeItem('smokepods_city'); setSelectedCity(null) }}
+            className="hidden sm:flex items-center gap-1 text-white/30 hover:text-white/60 transition-colors text-xs"
+          >
+            📍 {selectedCity}
+          </button>
+          <a href="/admin" className="hidden sm:flex items-center gap-1.5 text-white/40 hover:text-white/70 transition-colors text-sm">
             <AdminIcon />Admin
           </a>
           <button onClick={() => setCartOpen(true)}
-            className="relative flex items-center gap-2 px-4 py-2 rounded-xl font-bold text-white text-sm transition-all hover:brightness-110"
+            className="relative flex items-center gap-2 px-3 sm:px-4 py-2 rounded-xl font-bold text-white text-sm transition-all hover:brightness-110"
             style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.14)' }}>
-            <CartIcon />Carrinho
+            <CartIcon />
+            <span className="hidden sm:inline">Carrinho</span>
             {cartCount > 0 && (
               <span className="absolute -top-2 -right-2 w-5 h-5 rounded-full text-xs font-black text-white flex items-center justify-center"
-                style={{ background: 'linear-gradient(135deg, #1d4ed8, #3b82f6)' }}>
-                {cartCount}
-              </span>
+                style={{ background: 'linear-gradient(135deg, #1d4ed8, #3b82f6)' }}>{cartCount}</span>
             )}
           </button>
         </div>
       </header>
 
-      {/* ── Filtros e Ordenação ───────────────────────────────────── */}
-      <div className="px-6 pt-6 pb-4 max-w-screen-xl mx-auto">
-        <div className="flex flex-wrap gap-3 items-center">
-          <input
-            type="text"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
+      {/* Filtros */}
+      <div className="px-4 sm:px-6 pt-5 pb-3 max-w-screen-xl mx-auto">
+        {/* Cidade mobile */}
+        <button onClick={() => { localStorage.removeItem('smokepods_city'); setSelectedCity(null) }}
+          className="sm:hidden flex items-center gap-1 text-white/30 text-xs mb-3 hover:text-white/50 transition-colors">
+          📍 {selectedCity} <span className="ml-1 text-white/20">— trocar</span>
+        </button>
+        <div className="flex flex-wrap gap-2 sm:gap-3">
+          <input type="text" value={search} onChange={e => setSearch(e.target.value)}
             placeholder="🔍 Buscar produto..."
-            className="px-4 py-2.5 rounded-xl text-white text-sm placeholder-white/20 outline-none transition-colors flex-1 min-w-[160px]"
-            style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)' }}
-          />
-          <select
-            value={sortBy}
-            onChange={e => setSortBy(e.target.value)}
-            className="px-4 py-2.5 rounded-xl text-white text-sm outline-none transition-colors"
-            style={{
-              background: 'rgba(255,255,255,0.05)',
-              border: '1px solid rgba(255,255,255,0.12)',
-              appearance: 'none',
-              WebkitAppearance: 'none',
-              minWidth: '160px',
-              cursor: 'pointer',
-            }}
-          >
-            {sortOptions.map(o => (
-              <option key={o.value} value={o.value} style={{ background: '#111' }}>{o.label}</option>
-            ))}
+            className="px-4 py-2.5 rounded-xl text-white text-sm placeholder-white/20 outline-none flex-1 min-w-[140px]"
+            style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)' }} />
+          <input type="text" value={flavorSearch} onChange={e => setFlavorSearch(e.target.value)}
+            placeholder="🍓 Buscar sabor..."
+            className="px-4 py-2.5 rounded-xl text-white text-sm placeholder-white/20 outline-none flex-1 min-w-[140px]"
+            style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(59,130,246,0.2)' }} />
+          <select value={sortBy} onChange={e => setSortBy(e.target.value)}
+            className="px-4 py-2.5 rounded-xl text-white text-sm outline-none"
+            style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)', appearance: 'none', WebkitAppearance: 'none', minWidth: '150px', cursor: 'pointer' }}>
+            {sortOptions.map(o => <option key={o.value} value={o.value} style={{ background: '#111' }}>{o.label}</option>)}
           </select>
-          <div className="rounded-2xl border border-white/[0.08] bg-white/5 px-4 py-2 text-sm text-white/70">
-            Cidade: <span className="text-white font-semibold">{selectedCity || 'Nenhuma'}</span>
-          </div>
         </div>
+        {flavorSearch && (
+          <div className="mt-2 flex items-center gap-2">
+            <span className="text-white/30 text-xs">
+              Sabor: <span className="text-blue-400 font-semibold">"{flavorSearch}"</span> — {filtered.length} produto{filtered.length !== 1 ? 's' : ''}
+            </span>
+            <button onClick={() => setFlavorSearch('')} className="text-white/20 hover:text-white/50 text-xs">✕</button>
+          </div>
+        )}
       </div>
 
-      {/* ── Grid ─────────────────────────────────────────────────── */}
-      <section className="px-6 pb-28 max-w-screen-xl mx-auto">
+      {/* Grid */}
+      <section className="px-4 sm:px-6 pb-28 max-w-screen-xl mx-auto">
         {loading ? (
           <div className="flex items-center justify-center h-64">
             <div className="w-8 h-8 rounded-full border-2 border-t-transparent animate-spin"
@@ -468,10 +520,10 @@ export default function HomePage() {
           </div>
         ) : filtered.length === 0 ? (
           <div className="text-center text-white/20 py-20 text-sm">
-            {selectedCity ? 'Nenhum produto encontrado para a sua cidade.' : 'Nenhum produto encontrado.'}
+            {flavorSearch ? `Nenhum produto com o sabor "${flavorSearch}".` : `Nenhum produto disponível em ${selectedCity}.`}
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5">
             {filtered.map(pod => (
               <ProductCard key={pod.id} pod={pod} onAddToCart={addToCart}
                 onZoom={(src, alt) => { setZoomImg(src); setZoomAlt(alt) }} />
@@ -480,27 +532,15 @@ export default function HomePage() {
         )}
       </section>
 
-      {/* ── WhatsApp flutuante ────────────────────────────────────── */}
-      <a
-        href={`https://wa.me/559991036173`}
-        target="_blank"
-        rel="noopener noreferrer"
+      {/* WhatsApp flutuante */}
+      <a href="https://wa.me/5511999999999" target="_blank" rel="noopener noreferrer"
         className="fixed bottom-6 right-6 z-40 flex items-center justify-center rounded-full transition-all hover:scale-110 active:scale-95"
-        style={{
-          width: '58px',
-          height: '58px',
-          background: 'linear-gradient(135deg, #22c55e, #16a34a)',
-          boxShadow: '0 4px 24px rgba(34,197,94,0.45)',
-        }}
-        title="Fale conosco no WhatsApp"
-      >
+        style={{ width: '58px', height: '58px', background: 'linear-gradient(135deg, #22c55e, #16a34a)', boxShadow: '0 4px 24px rgba(34,197,94,0.45)' }}
+        title="Fale conosco no WhatsApp">
         <WAFloatIcon />
       </a>
 
-      {/* Cart */}
-      <Cart open={cartOpen} onClose={() => setCartOpen(false)} items={cartItems} setItems={setCartItems} availableFlavors={availableFlavors} />
-
-      {/* Image Zoom */}
+      <Cart open={cartOpen} onClose={() => setCartOpen(false)} items={cartItems} setItems={setCartItems} />
       <ImageZoomModal src={zoomImg} alt={zoomAlt} onClose={() => setZoomImg(null)} />
     </div>
   )

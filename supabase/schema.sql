@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS public.pods (
   promo_price NUMERIC(10, 2)   CHECK (promo_price IS NULL OR (promo_price >= 0 AND promo_price < price)),
   on_sale     BOOLEAN          NOT NULL DEFAULT false,
   image_url   TEXT,
+  city        TEXT             NOT NULL DEFAULT 'Buriticupu',
   stock_qty   INTEGER          NOT NULL DEFAULT 0 CHECK (stock_qty >= 0),
   created_at  TIMESTAMPTZ      DEFAULT NOW(),
   updated_at  TIMESTAMPTZ      DEFAULT NOW()
@@ -21,6 +22,10 @@ CREATE TABLE IF NOT EXISTS public.pods (
 
 -- Índice para buscas por nome
 CREATE INDEX IF NOT EXISTS idx_pods_name ON public.pods (name);
+
+-- Garante que a coluna city exista em bancos já criados
+ALTER TABLE IF EXISTS public.pods
+  ADD COLUMN IF NOT EXISTS city TEXT NOT NULL DEFAULT 'Buriticupu';
 
 -- -----------------------------------------------------------------------------
 -- 2. TRIGGER: atualiza updated_at automaticamente
