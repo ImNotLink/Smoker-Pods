@@ -436,7 +436,7 @@ export default function HomePage() {
           >
             📍 {selectedCity}
           </button>
-          <a href="/admin" className="hidden sm:flex items-center gap-1.5 text-white/40 hover:text-white/70 transition-colors text-sm">
+          <a href="/admin" className="flex items-center gap-1.5 text-white/40 hover:text-white/70 transition-colors text-sm">
             <AdminIcon />Admin
           </a>
           <button onClick={() => setCartOpen(true)}
