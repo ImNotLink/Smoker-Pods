@@ -506,7 +506,7 @@ export default function HomePage() {
       </section>
 
       {/* WhatsApp flutuante */}
-      <a href="https://wa.me/5511999999999" target="_blank" rel="noopener noreferrer"
+      <a href="https://wa.me/559991036173" target="_blank" rel="noopener noreferrer"
         className="fixed bottom-6 right-6 z-40 flex items-center justify-center rounded-full transition-all hover:scale-110 active:scale-95"
         style={{ width: '58px', height: '58px', background: 'linear-gradient(135deg, #22c55e, #16a34a)', boxShadow: '0 4px 24px rgba(34,197,94,0.45)' }}
         title="Fale conosco no WhatsApp">
