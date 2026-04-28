@@ -306,6 +306,47 @@ function ProductForm({ initial, onSave, onCancel, saving }) {
         )}
       </div>
 
+      {/* Cidades */}
+      <div>
+        <label className={labelCls}>🏙 Cidades Disponíveis</label>
+        <p className="text-white/25 text-xs mb-2">
+          Sem seleção = visível em todas as cidades.
+        </p>
+        <div className="flex flex-col gap-2">
+          {CITIES.map(city => {
+            const checked = (f.cities || []).includes(city)
+            return (
+              <button
+                key={city}
+                type="button"
+                onClick={() => {
+                  const next = checked
+                    ? f.cities.filter(c => c !== city)
+                    : [...(f.cities || []), city]
+                  set('cities', next)
+                }}
+                className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all text-left w-full"
+                style={{
+                  background: checked ? 'rgba(59,130,246,0.15)' : 'rgba(255,255,255,0.04)',
+                  border: checked ? '1px solid rgba(59,130,246,0.5)' : '1px solid rgba(255,255,255,0.08)',
+                  color: checked ? '#93c5fd' : 'rgba(255,255,255,0.4)',
+                }}
+              >
+                <span
+                  className="w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 text-xs font-bold transition-all"
+                  style={{
+                    background: checked ? 'rgba(59,130,246,0.4)' : 'rgba(255,255,255,0.07)',
+                    border: checked ? '1px solid rgba(59,130,246,0.6)' : '1px solid rgba(255,255,255,0.1)',
+                    color: checked ? '#fff' : 'transparent',
+                  }}
+                >✓</span>
+                📍 {city}
+              </button>
+            )
+          })}
+        </div>
+      </div>
+
       {/* Actions */}
       <div className="flex gap-3 pt-2">
         <button
@@ -710,6 +751,9 @@ export default function AdminPage() {
             </table>
           </div>
         )}
+      </main>
+
+        </>)}
 
         {/* ════ PEDIDOS TAB ════ */}
         {activeTab === 'orders' && (
@@ -942,7 +986,6 @@ export default function AdminPage() {
             })()}
           </div>
         )}
-      </main>
 
       {/* Edit / Create Modal */}
       <Modal open={editTarget !== null} onClose={() => setEditTarget(null)}
