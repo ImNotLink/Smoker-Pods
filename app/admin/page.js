@@ -460,7 +460,14 @@ export default function AdminPage() {
 
   async function quickStock(id, delta, current) {
     const newQty = Math.max(0, current + delta)
-    await supabase.from('pods').update({ stock_qty: newQty }).eq('id', id)
+    const pod = pods.find(p => p.id === id)
+    const payload = { stock_qty: newQty }
+    if (newQty === 0 && pod?.flavor_stock) {
+      payload.flavor_stock = Object.fromEntries(
+        Object.keys(pod.flavor_stock).map((fl) => [fl, 0])
+      )
+    }
+    await supabase.from('pods').update(payload).eq('id', id)
     fetchPods()
   }
 
@@ -593,7 +600,9 @@ export default function AdminPage() {
 
       {/* ── Main ────────────────────────────────────────────────────── */}
       <main className="md:ml-56 flex-1 p-4 sm:p-6 md:p-8 pt-20 md:pt-8">
-        {/* Top bar */}
+        {activeTab === 'products' && (
+          <>
+            {/* Top bar */}
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-white text-2xl font-black tracking-tight">Produtos</h1>
@@ -751,9 +760,8 @@ export default function AdminPage() {
             </table>
           </div>
         )}
-      </main>
-
-        </>)}
+          </>
+        )}
 
         {/* ════ PEDIDOS TAB ════ */}
         {activeTab === 'orders' && (
@@ -986,6 +994,7 @@ export default function AdminPage() {
             })()}
           </div>
         )}
+      </main>
 
       {/* Edit / Create Modal */}
       <Modal open={editTarget !== null} onClose={() => setEditTarget(null)}
