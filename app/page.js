@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import Cart from '@/components/Cart'
 
+const CITY_OPTIONS = ['Buriticupu', 'Imperatriz', 'Rondon do Pará']
+
 // ─── Icons ─────────────────────────────────────────────────────────────────────
 function LogoIcon() {
   return (
@@ -302,7 +304,7 @@ export default function HomePage() {
   const [cartItems, setCartItems] = useState([])
   const [cartOpen, setCartOpen] = useState(false)
   const [search, setSearch] = useState('')
-  const [flavorSearch, setFlavorSearch] = useState('')
+  const [selectedCity, setSelectedCity] = useState('')
   const [sortBy, setSortBy] = useState('price_asc')
   const [zoomImg, setZoomImg] = useState(null)
   const [zoomAlt, setZoomAlt] = useState('')
@@ -314,6 +316,13 @@ export default function HomePage() {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'pods' }, fetchPods)
       .subscribe()
     return () => supabase.removeChannel(channel)
+  }, [])
+
+  useEffect(() => {
+    const savedCity = window.localStorage.getItem('smokepods-city')
+    if (savedCity && CITY_OPTIONS.includes(savedCity)) {
+      setSelectedCity(savedCity)
+    }
   }, [])
 
   async function fetchPods() {
@@ -334,12 +343,8 @@ export default function HomePage() {
   }, [])
 
   // Filter + sort
-  let filtered = pods.filter(p => {
-    const nameMatch = p.name.toLowerCase().includes(search.toLowerCase())
-    const flavorMatch = flavorSearch === '' ||
-      p.flavors.some(f => f.toLowerCase().includes(flavorSearch.toLowerCase()))
-    return nameMatch && flavorMatch
-  })
+  const cityFiltered = selectedCity ? pods.filter(p => p.city === selectedCity) : []
+  let filtered = cityFiltered.filter(p => p.name.toLowerCase().includes(search.toLowerCase()))
 
   if (sortBy === 'price_asc') filtered = [...filtered].sort((a, b) => (a.promo_price || a.price) - (b.promo_price || b.price))
   else if (sortBy === 'price_desc') filtered = [...filtered].sort((a, b) => (b.promo_price || b.price) - (a.promo_price || a.price))
@@ -355,8 +360,35 @@ export default function HomePage() {
     { value: 'promo', label: '🔥 Promoções' },
   ]
 
+  const availableFlavors = Array.from(new Set(cityFiltered.flatMap(p => p.flavors).filter(Boolean)))
+
   return (
     <div className="min-h-screen" style={{ background: '#050505' }}>
+
+      {!selectedCity && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/95">
+          <div className="w-full max-w-lg rounded-[2rem] border border-white/[0.08] bg-slate-950/95 p-8 text-center">
+            <h1 className="text-white text-3xl font-black mb-4">Escolha sua cidade</h1>
+            <p className="text-white/50 mb-8">Para mostrar apenas os pods disponíveis na sua região.</p>
+            <div className="grid gap-3 sm:grid-cols-3">
+              {CITY_OPTIONS.map(city => (
+                <button
+                  key={city}
+                  type="button"
+                  onClick={() => {
+                    setSelectedCity(city)
+                    window.localStorage.setItem('smokepods-city', city)
+                  }}
+                  className="rounded-3xl px-5 py-4 text-sm font-bold text-white transition-all hover:brightness-110"
+                  style={{ background: 'rgba(59,130,246,0.15)', border: '1px solid rgba(59,130,246,0.25)' }}
+                >
+                  {city}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Header ────────────────────────────────────────────────── */}
       <header className="sticky top-0 z-30 flex items-center justify-between px-6 py-4"
@@ -395,8 +427,7 @@ export default function HomePage() {
 
       {/* ── Filtros e Ordenação ───────────────────────────────────── */}
       <div className="px-6 pt-6 pb-4 max-w-screen-xl mx-auto">
-        <div className="flex flex-wrap gap-3">
-          {/* Busca por nome */}
+        <div className="flex flex-wrap gap-3 items-center">
           <input
             type="text"
             value={search}
@@ -405,16 +436,6 @@ export default function HomePage() {
             className="px-4 py-2.5 rounded-xl text-white text-sm placeholder-white/20 outline-none transition-colors flex-1 min-w-[160px]"
             style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)' }}
           />
-          {/* Busca por sabor */}
-          <input
-            type="text"
-            value={flavorSearch}
-            onChange={e => setFlavorSearch(e.target.value)}
-            placeholder="🍓 Buscar por sabor..."
-            className="px-4 py-2.5 rounded-xl text-white text-sm placeholder-white/20 outline-none transition-colors flex-1 min-w-[160px]"
-            style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(59,130,246,0.2)' }}
-          />
-          {/* Ordenação */}
           <select
             value={sortBy}
             onChange={e => setSortBy(e.target.value)}
@@ -432,19 +453,10 @@ export default function HomePage() {
               <option key={o.value} value={o.value} style={{ background: '#111' }}>{o.label}</option>
             ))}
           </select>
-        </div>
-
-        {/* Flavor search result info */}
-        {flavorSearch && (
-          <div className="mt-3 flex items-center gap-2">
-            <span className="text-white/30 text-xs">
-              Sabor: <span className="text-blue-400 font-semibold">"{flavorSearch}"</span>
-              {' '}— {filtered.length} produto{filtered.length !== 1 ? 's' : ''} encontrado{filtered.length !== 1 ? 's' : ''}
-            </span>
-            <button onClick={() => setFlavorSearch('')}
-              className="text-white/20 hover:text-white/50 text-xs transition-colors">✕ limpar</button>
+          <div className="rounded-2xl border border-white/[0.08] bg-white/5 px-4 py-2 text-sm text-white/70">
+            Cidade: <span className="text-white font-semibold">{selectedCity || 'Nenhuma'}</span>
           </div>
-        )}
+        </div>
       </div>
 
       {/* ── Grid ─────────────────────────────────────────────────── */}
@@ -456,7 +468,7 @@ export default function HomePage() {
           </div>
         ) : filtered.length === 0 ? (
           <div className="text-center text-white/20 py-20 text-sm">
-            {flavorSearch ? `Nenhum produto com o sabor "${flavorSearch}".` : 'Nenhum produto encontrado.'}
+            {selectedCity ? 'Nenhum produto encontrado para a sua cidade.' : 'Nenhum produto encontrado.'}
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
@@ -486,7 +498,7 @@ export default function HomePage() {
       </a>
 
       {/* Cart */}
-      <Cart open={cartOpen} onClose={() => setCartOpen(false)} items={cartItems} setItems={setCartItems} />
+      <Cart open={cartOpen} onClose={() => setCartOpen(false)} items={cartItems} setItems={setCartItems} availableFlavors={availableFlavors} />
 
       {/* Image Zoom */}
       <ImageZoomModal src={zoomImg} alt={zoomAlt} onClose={() => setZoomImg(null)} />

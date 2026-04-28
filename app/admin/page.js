@@ -16,7 +16,8 @@ const I = {
 }
 
 // ─── Constants ──────────────────────────────────────────────────────────────────
-const EMPTY = { name: '', price: '', promo_price: '', on_sale: false, stock_qty: '0', image_url: '', flavors: [], flavor_stock: {} }
+const EMPTY = { name: '', price: '', promo_price: '', on_sale: false, stock_qty: '0', image_url: '', city: '', flavors: [], flavor_stock: {} }
+const CITY_OPTIONS = ['Buriticupu', 'Imperatriz', 'Rondon do Pará']
 
 // ─── UI helpers ────────────────────────────────────────────────────────────────
 const inputCls = 'w-full px-4 py-2.5 rounded-xl text-white text-sm outline-none transition-colors border border-white/[0.08] focus:border-blue-500/50 placeholder-white/20'
@@ -182,6 +183,22 @@ function ProductForm({ initial, onSave, onCancel, saving }) {
             placeholder="0,00"
           />
         </div>
+      </div>
+
+      <div>
+        <label className={labelCls}>Cidade</label>
+        <select
+          className={inputCls}
+          style={inputStyle}
+          value={f.city}
+          onChange={(e) => set('city', e.target.value)}
+          required
+        >
+          <option value="" disabled>Selecione a cidade</option>
+          {CITY_OPTIONS.map((city) => (
+            <option key={city} value={city}>{city}</option>
+          ))}
+        </select>
       </div>
 
       {/* On sale only (stock is now per-flavor) */}
@@ -387,6 +404,7 @@ export default function AdminPage() {
       on_sale: form.on_sale,
       stock_qty: form.stock_qty || 0,
       image_url: form.image_url || null,
+      city: form.city || null,
       flavors: form.flavors,
       flavor_stock: form.flavor_stock || {},
     }
@@ -413,9 +431,30 @@ export default function AdminPage() {
     fetchPods()
   }
 
-  async function quickStock(id, delta, current) {
+  async function quickStock(id, delta, current, flavorStock = {}) {
     const newQty = Math.max(0, current + delta)
-    await supabase.from('pods').update({ stock_qty: newQty }).eq('id', id)
+    const updatePayload = { stock_qty: newQty }
+
+    const hasFlavorStock = Object.keys(flavorStock || {}).length > 0
+    if (hasFlavorStock) {
+      const flavorKeys = Object.keys(flavorStock)
+      const currentTotal = flavorKeys.reduce((sum, key) => sum + (parseInt(flavorStock[key]) || 0), 0)
+      let updatedFlavorStock = { ...flavorStock }
+
+      if (newQty === 0) {
+        updatedFlavorStock = Object.fromEntries(flavorKeys.map(key => [key, 0]))
+      } else if (currentTotal === 0) {
+        updatedFlavorStock[flavorKeys[0]] = newQty
+      } else if (newQty !== currentTotal) {
+        const diff = newQty - currentTotal
+        const targetKey = flavorKeys.find(key => parseInt(updatedFlavorStock[key]) > 0) || flavorKeys[0]
+        updatedFlavorStock[targetKey] = Math.max(0, (parseInt(updatedFlavorStock[targetKey]) || 0) + diff)
+      }
+
+      updatePayload.flavor_stock = updatedFlavorStock
+    }
+
+    await supabase.from('pods').update(updatePayload).eq('id', id)
     fetchPods()
   }
 
@@ -442,11 +481,11 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="min-h-screen flex" style={{ background: '#050505' }}>
+    <div className="min-h-screen" style={{ background: '#050505' }}>
 
       {/* ── Sidebar ─────────────────────────────────────────────────── */}
       <aside
-        className="fixed top-0 left-0 h-full w-56 flex flex-col py-7 px-4 z-20"
+        className="relative lg:fixed lg:top-0 lg:left-0 lg:h-full w-full lg:w-56 flex flex-col py-7 px-4 z-20"
         style={{
           background: 'rgba(8,8,11,0.95)',
           borderRight: '1px solid rgba(255,255,255,0.06)',
@@ -507,8 +546,10 @@ export default function AdminPage() {
       </aside>
 
       {/* ── Main ────────────────────────────────────────────────────── */}
-      <main className="ml-56 flex-1 p-8">
-        {/* Top bar */}
+      <main className="lg:ml-56 flex-1 p-6 lg:p-8">
+        {activeTab === 'products' && (
+          <>
+            {/* Top bar */}
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-white text-2xl font-black tracking-tight">Produtos</h1>
@@ -564,7 +605,7 @@ export default function AdminPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.02)' }}>
-                  {['Produto', 'Sabores', 'Preço', 'Promo', 'Estoque', 'Ações'].map((h) => (
+                  {['Produto', 'Sabores', 'Preço', 'Promo', 'Cidade', 'Estoque', 'Ações'].map((h) => (
                     <th key={h} className="text-left px-5 py-3.5 text-white/25 text-xs font-semibold uppercase tracking-wider">
                       {h}
                     </th>
@@ -573,7 +614,7 @@ export default function AdminPage() {
               </thead>
               <tbody>
                 {filtered.length === 0 ? (
-                  <tr><td colSpan={6} className="text-center text-white/20 py-12 text-sm">Nenhum produto.</td></tr>
+                  <tr><td colSpan={7} className="text-center text-white/20 py-12 text-sm">Nenhum produto.</td></tr>
                 ) : filtered.map((pod, idx) => (
                   <tr
                     key={pod.id}
@@ -627,11 +668,18 @@ export default function AdminPage() {
                       )}
                     </td>
 
+                    {/* City */}
+                    <td className="px-5 py-4">
+                      <span className="text-white/50 text-xs font-semibold">
+                        {pod.city || '—'}
+                      </span>
+                    </td>
+
                     {/* Stock */}
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-1.5">
                         <button
-                          onClick={() => quickStock(pod.id, -1, pod.stock_qty)}
+                          onClick={() => quickStock(pod.id, -1, pod.stock_qty, pod.flavor_stock)}
                           className="w-6 h-6 rounded-lg flex items-center justify-center text-white/30 hover:text-white border border-white/[0.08] transition-all text-sm font-bold"
                         >−</button>
                         <span
@@ -641,7 +689,7 @@ export default function AdminPage() {
                           {pod.stock_qty}
                         </span>
                         <button
-                          onClick={() => quickStock(pod.id, 1, pod.stock_qty)}
+                          onClick={() => quickStock(pod.id, 1, pod.stock_qty, pod.flavor_stock)}
                           className="w-6 h-6 rounded-lg flex items-center justify-center text-white/30 hover:text-white border border-white/[0.08] transition-all text-sm font-bold"
                         >+</button>
                       </div>
@@ -666,9 +714,8 @@ export default function AdminPage() {
             </table>
           </div>
         )}
-      </main>
-
-       
+          </>
+        )}
 
         {/* ════ PEDIDOS TAB ════ */}
         {activeTab === 'orders' && (
@@ -856,6 +903,7 @@ export default function AdminPage() {
             })()}
           </div>
         )}
+      </main>
 
       {/* Edit / Create Modal */}
       <Modal open={editTarget !== null} onClose={() => setEditTarget(null)}
