@@ -301,33 +301,6 @@ function ProductCard({ pod, onAddToCart, onZoom }) {
             )}
           </div>
 
-          {/* Preview de sabores disponíveis (só leitura) */}
-          {!isGlobalOut && (
-            <div className="flex flex-wrap gap-1">
-              {availableFlavors.slice(0, 4).map(f => {
-                const fQty = getFlavorQty(f)
-                const fLow = fQty <= 3
-                return (
-                  <span key={f} className="px-2.5 py-1 rounded-full text-xs"
-                    style={{
-                      background: 'rgba(255,255,255,0.05)',
-                      border: '1px solid rgba(255,255,255,0.1)',
-                      color: fLow ? '#fcd34d' : 'rgba(255,255,255,0.5)',
-                    }}>
-                    {f}
-                    {fLow && <span className="ml-1 text-orange-400 text-[10px]">({fQty})</span>}
-                  </span>
-                )
-              })}
-              {availableFlavors.length > 4 && (
-                <span className="px-2.5 py-1 rounded-full text-xs text-white/30"
-                  style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
-                  +{availableFlavors.length - 4} mais
-                </span>
-              )}
-            </div>
-          )}
-
           {isGlobalOut && (
             <p className="text-red-400/60 text-xs">Produto temporariamente indisponível</p>
           )}
