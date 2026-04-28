@@ -2,8 +2,14 @@
 import './globals.css'
 
 export const metadata = {
-  title: 'SmokePods — Os Melhores Pods do Mercado',
-  description: 'Compre os melhores pods. Pedido rápido pelo WhatsApp.',
+  title: 'SmokePods — Os Melhores Pods & Vapes',
+  description: 'Compre os melhores pods e cigarros eletrônicos. Checkout rápido pelo WhatsApp.',
+}
+
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
 }
 
 export default function RootLayout({ children }) {
