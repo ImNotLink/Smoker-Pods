@@ -377,6 +377,7 @@ export default function AdminPage() {
   const [saving, setSaving] = useState(false)
   const [editTarget, setEditTarget] = useState(null)
   const [delTarget, setDelTarget] = useState(null)
+  const [delOrderTarget, setDelOrderTarget] = useState(null)
   const [search, setSearch] = useState('')
   const [activeTab, setActiveTab] = useState('products')
 
@@ -447,6 +448,14 @@ export default function AdminPage() {
     setSaving(false)
     setEditTarget(null)
     fetchPods()
+  }
+
+  async function handleDeleteOrder() {
+    if (!delOrderTarget) return
+    const { error } = await supabase.from('orders').delete().eq('id', delOrderTarget.id)
+    if (error) alert('Erro ao excluir pedido: ' + error.message)
+    setDelOrderTarget(null)
+    fetchOrders()
   }
 
   async function handleDelete() {
@@ -789,7 +798,7 @@ export default function AdminPage() {
                 <table className="w-full text-sm min-w-[600px]">
                   <thead>
                     <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.02)' }}>
-                      {['Data', 'Itens', 'Total', 'Pagamento', 'Como nos conheceu'].map(h => (
+                      {['Data', 'Itens', 'Total', 'Pagamento', 'Como nos conheceu', ''].map(h => (
                         <th key={h} className="text-left px-5 py-3.5 text-white/25 text-xs font-semibold uppercase tracking-wider">{h}</th>
                       ))}
                     </tr>
@@ -826,6 +835,12 @@ export default function AdminPage() {
                           </span>
                         </td>
                         <td className="px-5 py-4 text-white/40 text-xs">{order.how_found}</td>
+                        <td className="px-5 py-4">
+                          <button
+                            onClick={() => setDelOrderTarget(order)}
+                            className="w-8 h-8 rounded-xl flex items-center justify-center text-white/30 hover:text-red-400 border border-white/[0.08] hover:border-red-500/40 transition-all"
+                          ><I.Trash /></button>
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -1007,6 +1022,20 @@ export default function AdminPage() {
         {editTarget !== null && (
           <ProductForm initial={editTarget} onSave={handleSave} onCancel={() => setEditTarget(null)} saving={saving} />
         )}
+      </Modal>
+
+      {/* Delete order confirm */}
+      <Modal open={delOrderTarget !== null} onClose={() => setDelOrderTarget(null)} title="Excluir Pedido">
+        <p className="text-white/50 text-sm mb-6">
+          Excluir o pedido de <span className="text-white font-semibold">R$ {Number(delOrderTarget?.total || 0).toFixed(2).replace('.', ',')}</span>? Esta ação é irreversível.
+        </p>
+        <div className="flex gap-3">
+          <button onClick={() => setDelOrderTarget(null)}
+            className="flex-1 py-3 rounded-xl text-sm text-white/40 border border-white/[0.08] hover:border-white/20 transition-colors">Cancelar</button>
+          <button onClick={handleDeleteOrder}
+            className="flex-1 py-3 rounded-xl text-sm font-bold text-white transition-all hover:brightness-110"
+            style={{ background: 'linear-gradient(135deg, #dc2626, #ef4444)' }}>Excluir</button>
+        </div>
       </Modal>
 
       {/* Delete confirm */}
