@@ -391,9 +391,20 @@ export default function HomePage() {
     return cityMatch && nameMatch && flavorMatch
   })
 
-  if (sortBy === 'price_asc') filtered = [...filtered].sort((a, b) => (a.promo_price || a.price) - (b.promo_price || b.price))
-  else if (sortBy === 'price_desc') filtered = [...filtered].sort((a, b) => (b.promo_price || b.price) - (a.promo_price || a.price))
-  else if (sortBy === 'promo') filtered = [...filtered].sort((a, b) => (b.on_sale ? 1 : 0) - (a.on_sale ? 1 : 0))
+  // Sempre ordena por menor preço primeiro (critério primário)
+  filtered = [...filtered].sort((a, b) => {
+    const aPrice = a.promo_price || a.price
+    const bPrice = b.promo_price || b.price
+    const priceCompare = aPrice - bPrice
+
+    // Se preços são iguais, aplica ordenação secundária
+    if (priceCompare !== 0) return priceCompare
+
+    // Desempate secundário baseado em sortBy
+    if (sortBy === 'promo') return (b.on_sale ? 1 : 0) - (a.on_sale ? 1 : 0)
+    if (sortBy === 'price_desc') return bPrice - aPrice
+    return 0 // price_asc ou newest
+  })
 
   // Ordena para colocar produtos esgotados no final
   filtered = [...filtered].sort((a, b) => {

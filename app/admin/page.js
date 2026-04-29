@@ -531,9 +531,14 @@ export default function AdminPage() {
             </button>
           ))}
         </div>
-        <button onClick={handleLogout} className="text-white/30 hover:text-white/60 transition-colors text-xs flex items-center gap-1">
-          <I.Logout /> Sair
-        </button>
+        <div className="flex items-center gap-2">
+          <a href="/" className="text-white/30 hover:text-white/60 transition-colors text-xs flex items-center gap-1">
+            ← Vitrine
+          </a>
+          <button onClick={handleLogout} className="text-white/30 hover:text-white/60 transition-colors text-xs flex items-center gap-1">
+            <I.Logout /> Sair
+          </button>
+        </div>
       </div>
 
       {/* ── Sidebar ─────────────────────────────────────────────────── */}
