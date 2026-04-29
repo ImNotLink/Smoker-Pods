@@ -391,41 +391,20 @@ export default function HomePage() {
     return cityMatch && nameMatch && flavorMatch
   })
 
-  // Sempre ordena por menor preço primeiro (critério primário)
+  // Esgotados no final; dentro de cada grupo, menor preço primeiro
   filtered = [...filtered].sort((a, b) => {
-    const aPrice = a.promo_price || a.price
-    const bPrice = b.promo_price || b.price
-    const priceCompare = aPrice - bPrice
+    const stockOf = p => {
+      const fs = p.flavor_stock || {}
+      return Object.keys(fs).length > 0
+        ? Object.values(fs).reduce((s, v) => s + v, 0)
+        : (p.stock_qty ?? 0)
+    }
+    const aOut = stockOf(a) === 0
+    const bOut = stockOf(b) === 0
+    if (aOut !== bOut) return aOut ? 1 : -1
 
-    // Se preços são iguais, aplica ordenação secundária
-    if (priceCompare !== 0) return priceCompare
-
-    // Desempate secundário baseado em sortBy
-    if (sortBy === 'promo') return (b.on_sale ? 1 : 0) - (a.on_sale ? 1 : 0)
-    if (sortBy === 'price_desc') return bPrice - aPrice
-    return 0 // price_asc ou newest
-  })
-
-  // Ordena para colocar produtos esgotados no final
-  filtered = [...filtered].sort((a, b) => {
-    const aFlavorStock = a.flavor_stock || {}
-    const bFlavorStock = b.flavor_stock || {}
-    const aHasFlavorStock = Object.keys(aFlavorStock).length > 0
-    const bHasFlavorStock = Object.keys(bFlavorStock).length > 0
-    
-    const aTotalStock = aHasFlavorStock
-      ? Object.values(aFlavorStock).reduce((sum, val) => sum + val, 0)
-      : a.stock_qty
-    const bTotalStock = bHasFlavorStock
-      ? Object.values(bFlavorStock).reduce((sum, val) => sum + val, 0)
-      : b.stock_qty
-
-    const aIsOut = aTotalStock === 0
-    const bIsOut = bTotalStock === 0
-
-    // Se um está esgotado e o outro não, o esgotado vai pro final
-    if (aIsOut !== bIsOut) return aIsOut ? 1 : -1
-    return 0
+    const priceOf = p => (p.on_sale && p.promo_price) ? p.promo_price : p.price
+    return priceOf(a) - priceOf(b)
   })
 
   const cartCount = cartItems.reduce((s, i) => s + i.qty, 0)
