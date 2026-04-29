@@ -35,7 +35,7 @@ export default function Cart({ open, onClose, items, setItems, availableFlavors 
   const [payment, setPayment] = useState('')
   const [howFound, setHowFound] = useState('')
   const [formError, setFormError] = useState('')
-  const [sending, setSending] = useState(false)
+
 
   const total = items.reduce((sum, i) => sum + i.unitPrice * i.qty, 0)
   const totalQty = items.reduce((s, i) => s + i.qty, 0)
@@ -51,13 +51,11 @@ export default function Cart({ open, onClose, items, setItems, availableFlavors 
     )
   }
 
-  async function checkout() {
+  function checkout() {
     setFormError('')
     if (!payment) { setFormError('Selecione a forma de pagamento.'); return }
     if (!howFound) { setFormError('Informe como nos conheceu.'); return }
     if (items.length === 0) { setFormError('Seu carrinho está vazio.'); return }
-
-    setSending(true)
 
     const lines = [
       '🛒 *Novo Pedido — Smoke Pods*',
@@ -74,33 +72,27 @@ export default function Cart({ open, onClose, items, setItems, availableFlavors 
       '_Aguardo a confirmação! 🙏_',
     ]
 
-    // Deve ser chamado antes de qualquer await para não perder o contexto do evento de clique
-    window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(lines.join('\n'))}`, '_blank')
+    // Salva pedido em background sem bloquear o redirecionamento
+    supabase.from('orders').insert({
+      items: items.map(i => ({
+        id: i.id,
+        name: i.name,
+        flavor: i.selectedFlavor,
+        qty: i.qty,
+        unit_price: i.unitPrice,
+        subtotal: i.unitPrice * i.qty,
+      })),
+      total: parseFloat(total.toFixed(2)),
+      payment,
+      how_found: howFound,
+    }).catch(e => console.error('Erro ao salvar pedido:', e))
 
-    // Salva pedido no Supabase
-    try {
-      await supabase.from('orders').insert({
-        items: items.map(i => ({
-          id: i.id,
-          name: i.name,
-          flavor: i.selectedFlavor,
-          qty: i.qty,
-          unit_price: i.unitPrice,
-          subtotal: i.unitPrice * i.qty,
-        })),
-        total: parseFloat(total.toFixed(2)),
-        payment,
-        how_found: howFound,
-      })
-    } catch (e) {
-      console.error('Erro ao salvar pedido:', e)
-    }
-
-    setSending(false)
     setItems([])
     setPayment('')
     setHowFound('')
     onClose()
+
+    window.location.href = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(lines.join('\n'))}`
   }
 
   const sel = {
@@ -236,12 +228,11 @@ export default function Cart({ open, onClose, items, setItems, availableFlavors 
             {formError && <p className="text-red-400 text-xs">{formError}</p>}
             <button
               onClick={checkout}
-              disabled={sending}
-              className="w-full flex items-center justify-center gap-2.5 py-4 rounded-2xl font-bold text-white text-sm tracking-wide transition-all hover:brightness-110 active:scale-[0.98] disabled:opacity-60"
+              className="w-full flex items-center justify-center gap-2.5 py-4 rounded-2xl font-bold text-white text-sm tracking-wide transition-all hover:brightness-110 active:scale-[0.98]"
               style={{ background: 'linear-gradient(135deg, #22c55e, #16a34a)', boxShadow: '0 0 30px rgba(34,197,94,0.25)' }}
             >
               <WAIcon />
-              {sending ? 'Enviando...' : 'Finalizar pelo WhatsApp'}
+              Finalizar pelo WhatsApp
             </button>
           </div>
         )}
