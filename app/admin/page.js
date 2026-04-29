@@ -626,7 +626,7 @@ export default function AdminPage() {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           {stats.map((s) => (
             <div
               key={s.label}
@@ -657,10 +657,10 @@ export default function AdminPage() {
           </div>
         ) : (
           <div
-            className="rounded-2xl overflow-hidden"
+            className="rounded-2xl overflow-x-auto"
             style={{ border: '1px solid rgba(255,255,255,0.07)' }}
           >
-            <table className="w-full text-sm">
+            <table className="w-full text-sm min-w-[600px]">
               <thead>
                 <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.02)' }}>
                   {['Produto', 'Sabores', 'Preço', 'Promo', 'Estoque', 'Ações'].map((h) => (
@@ -785,8 +785,8 @@ export default function AdminPage() {
             ) : orders.length === 0 ? (
               <div className="text-center text-white/20 py-20 text-sm">Nenhum pedido ainda.</div>
             ) : (
-              <div className="rounded-2xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.07)' }}>
-                <table className="w-full text-sm">
+              <div className="rounded-2xl overflow-x-auto" style={{ border: '1px solid rgba(255,255,255,0.07)' }}>
+                <table className="w-full text-sm min-w-[600px]">
                   <thead>
                     <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.02)' }}>
                       {['Data', 'Itens', 'Total', 'Pagamento', 'Como nos conheceu'].map(h => (
@@ -876,7 +876,7 @@ export default function AdminPage() {
               return (
                 <div className="space-y-6">
                   {/* Cards de resumo */}
-                  <div className="grid grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     {[
                       { label: 'Total em Pedidos', value: `R$ ${totalRevenue.toFixed(2).replace('.', ',')}`, color: '#3b82f6' },
                       { label: 'Nº de Pedidos', value: totalOrders, color: '#22c55e' },
@@ -935,7 +935,7 @@ export default function AdminPage() {
                     </div>
                   )}
 
-                  <div className="grid grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Produtos mais pedidos */}
                     <div className="rounded-2xl p-5" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
                       <h3 className="text-white font-bold text-sm mb-4">🏆 Produtos Mais Pedidos</h3>
