@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { supabase } from '@/lib/supabase'
 
 // ⚠️  SUBSTITUA pelo número real com DDI+DDD (sem espaços ou hífen)
 const WHATSAPP_NUMBER = '559991036173'
@@ -50,11 +51,20 @@ export default function Cart({ open, onClose, items, setItems, availableFlavors 
     )
   }
 
-  function checkout() {
+  async function checkout() {
     setFormError('')
     if (!payment) { setFormError('Selecione a forma de pagamento.'); return }
     if (!howFound) { setFormError('Informe como nos conheceu.'); return }
     if (items.length === 0) { setFormError('Seu carrinho está vazio.'); return }
+
+    const orderItems = items.map(i => ({ name: i.name, flavor: i.selectedFlavor, qty: i.qty }))
+
+    await supabase.from('orders').insert({
+      items: orderItems,
+      total,
+      payment,
+      how_found: howFound,
+    })
 
     const lines = [
       '🛒 *Novo Pedido — Smoke Pods*',
