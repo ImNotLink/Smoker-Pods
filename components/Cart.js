@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { supabase } from '@/lib/supabase'
 
 // ⚠️  SUBSTITUA pelo número real com DDI+DDD (sem espaços ou hífen)
 const WHATSAPP_NUMBER = '559991036173'
@@ -72,35 +71,12 @@ export default function Cart({ open, onClose, items, setItems, availableFlavors 
       '_Aguardo a confirmação! 🙏_',
     ]
 
-    const waUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(lines.join('\n'))}`
-
-    // Salva pedido em background sem bloquear o redirecionamento
-    try {
-      supabase.from('orders').insert({
-        items: items.map(i => ({
-          id: i.id,
-          name: i.name,
-          flavor: i.selectedFlavor,
-          qty: i.qty,
-          unit_price: i.unitPrice,
-          subtotal: i.unitPrice * i.qty,
-        })),
-        total: parseFloat(total.toFixed(2)),
-        payment,
-        how_found: howFound,
-      }).then(({ error }) => {
-        if (error) console.error('Erro ao salvar pedido:', error)
-      }).catch(e => console.error('Erro ao salvar pedido:', e))
-    } catch (e) {
-      console.error('Erro ao salvar pedido:', e)
-    }
+    window.location.href = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(lines.join('\n'))}`
 
     setItems([])
     setPayment('')
     setHowFound('')
     onClose()
-
-    window.open(waUrl, '_blank', 'noopener,noreferrer')
   }
 
   const sel = {
