@@ -504,7 +504,7 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="min-h-screen flex" style={{ background: '#050505' }}>
+    <div className="min-h-screen flex overflow-x-hidden w-full" style={{ background: '#050505' }}>
 
       {/* ── Mobile top bar ──────────────────────────────────────────── */}
       <div className="md:hidden fixed top-0 left-0 right-0 z-30 flex items-center justify-between px-4 py-3"
@@ -604,7 +604,7 @@ export default function AdminPage() {
       </aside>
 
       {/* ── Main ────────────────────────────────────────────────────── */}
-      <main className="md:ml-56 flex-1 p-4 sm:p-6 md:p-8 pt-20 md:pt-8">
+      <main className="md:ml-56 flex-1 min-w-0 overflow-x-hidden p-4 sm:p-6 md:p-8 pt-20 md:pt-8">
         {activeTab === 'products' && (
           <>
             {/* Top bar */}
