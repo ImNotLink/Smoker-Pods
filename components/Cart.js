@@ -72,27 +72,35 @@ export default function Cart({ open, onClose, items, setItems, availableFlavors 
       '_Aguardo a confirmação! 🙏_',
     ]
 
+    const waUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(lines.join('\n'))}`
+
     // Salva pedido em background sem bloquear o redirecionamento
-    supabase.from('orders').insert({
-      items: items.map(i => ({
-        id: i.id,
-        name: i.name,
-        flavor: i.selectedFlavor,
-        qty: i.qty,
-        unit_price: i.unitPrice,
-        subtotal: i.unitPrice * i.qty,
-      })),
-      total: parseFloat(total.toFixed(2)),
-      payment,
-      how_found: howFound,
-    }).catch(e => console.error('Erro ao salvar pedido:', e))
+    try {
+      supabase.from('orders').insert({
+        items: items.map(i => ({
+          id: i.id,
+          name: i.name,
+          flavor: i.selectedFlavor,
+          qty: i.qty,
+          unit_price: i.unitPrice,
+          subtotal: i.unitPrice * i.qty,
+        })),
+        total: parseFloat(total.toFixed(2)),
+        payment,
+        how_found: howFound,
+      }).then(({ error }) => {
+        if (error) console.error('Erro ao salvar pedido:', error)
+      }).catch(e => console.error('Erro ao salvar pedido:', e))
+    } catch (e) {
+      console.error('Erro ao salvar pedido:', e)
+    }
 
     setItems([])
     setPayment('')
     setHowFound('')
     onClose()
 
-    window.location.href = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(lines.join('\n'))}`
+    window.open(waUrl, '_blank', 'noopener,noreferrer')
   }
 
   const sel = {
