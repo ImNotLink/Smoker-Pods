@@ -207,7 +207,7 @@ function FlavorModal({ pod, onConfirm, onClose }) {
             background: selected ? 'linear-gradient(135deg, #1d4ed8, #3b82f6)' : 'rgba(255,255,255,0.05)',
             boxShadow: selected ? '0 0 20px rgba(59,130,246,0.3)' : 'none',
           }}>
-          {selected ? `Escolher Sabor` : 'Selecione um sabor'}
+          {selected ? `Comprar agora` : 'Selecione um sabor'}
         </button>
       </div>
     </div>
