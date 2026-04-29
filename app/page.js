@@ -207,7 +207,7 @@ function FlavorModal({ pod, onConfirm, onClose }) {
             background: selected ? 'linear-gradient(135deg, #1d4ed8, #3b82f6)' : 'rgba(255,255,255,0.05)',
             boxShadow: selected ? '0 0 20px rgba(59,130,246,0.3)' : 'none',
           }}>
-          {selected ? `Adicionar ao Carrinho` : 'Selecione um sabor'}
+          {selected ? `Escolher Sabor` : 'Selecione um sabor'}
         </button>
       </div>
     </div>
@@ -315,7 +315,7 @@ function ProductCard({ pod, onAddToCart, onZoom }) {
               boxShadow: (!isGlobalOut && !added) ? '0 0 20px rgba(59,130,246,0.3)' : 'none',
             }}>
             <CartIcon size={16} />
-            {isGlobalOut ? 'Esgotado' : added ? 'Adicionado ✓' : 'Adicionar ao Carrinho'}
+            {isGlobalOut ? 'Esgotado' : added ? 'Adicionado ✓' : 'Escolher Sabor'}
           </button>
         </div>
       </div>
@@ -394,6 +394,28 @@ export default function HomePage() {
   if (sortBy === 'price_asc') filtered = [...filtered].sort((a, b) => (a.promo_price || a.price) - (b.promo_price || b.price))
   else if (sortBy === 'price_desc') filtered = [...filtered].sort((a, b) => (b.promo_price || b.price) - (a.promo_price || a.price))
   else if (sortBy === 'promo') filtered = [...filtered].sort((a, b) => (b.on_sale ? 1 : 0) - (a.on_sale ? 1 : 0))
+
+  // Ordena para colocar produtos esgotados no final
+  filtered = [...filtered].sort((a, b) => {
+    const aFlavorStock = a.flavor_stock || {}
+    const bFlavorStock = b.flavor_stock || {}
+    const aHasFlavorStock = Object.keys(aFlavorStock).length > 0
+    const bHasFlavorStock = Object.keys(bFlavorStock).length > 0
+    
+    const aTotalStock = aHasFlavorStock
+      ? Object.values(aFlavorStock).reduce((sum, val) => sum + val, 0)
+      : a.stock_qty
+    const bTotalStock = bHasFlavorStock
+      ? Object.values(bFlavorStock).reduce((sum, val) => sum + val, 0)
+      : b.stock_qty
+
+    const aIsOut = aTotalStock === 0
+    const bIsOut = bTotalStock === 0
+
+    // Se um está esgotado e o outro não, o esgotado vai pro final
+    if (aIsOut !== bIsOut) return aIsOut ? 1 : -1
+    return 0
+  })
 
   const cartCount = cartItems.reduce((s, i) => s + i.qty, 0)
 
