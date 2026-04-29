@@ -59,6 +59,24 @@ export default function Cart({ open, onClose, items, setItems, availableFlavors 
 
     setSending(true)
 
+    const lines = [
+      '🛒 *Novo Pedido — Smoke Pods*',
+      '',
+      '*Itens:*',
+      ...items.map((i, n) =>
+        `${n + 1}. *${i.name}*\n   Sabor: ${i.selectedFlavor}\n   Qtd: ${i.qty}x\n   Valor: R$ ${(i.unitPrice * i.qty).toFixed(2).replace('.', ',')}`
+      ),
+      '',
+      `💰 *Total: R$ ${total.toFixed(2).replace('.', ',')}*`,
+      `💳 *Pagamento:* ${payment}`,
+      `📣 *Como nos conheceu:* ${howFound}`,
+      '',
+      '_Aguardo a confirmação! 🙏_',
+    ]
+
+    // Deve ser chamado antes de qualquer await para não perder o contexto do evento de clique
+    window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(lines.join('\n'))}`, '_blank')
+
     // Salva pedido no Supabase
     try {
       await supabase.from('orders').insert({
@@ -78,22 +96,6 @@ export default function Cart({ open, onClose, items, setItems, availableFlavors 
       console.error('Erro ao salvar pedido:', e)
     }
 
-    const lines = [
-      '🛒 *Novo Pedido — Smoke Pods*',
-      '',
-      '*Itens:*',
-      ...items.map((i, n) =>
-        `${n + 1}. *${i.name}*\n   Sabor: ${i.selectedFlavor}\n   Qtd: ${i.qty}x\n   Valor: R$ ${(i.unitPrice * i.qty).toFixed(2).replace('.', ',')}`
-      ),
-      '',
-      `💰 *Total: R$ ${total.toFixed(2).replace('.', ',')}*`,
-      `💳 *Pagamento:* ${payment}`,
-      `📣 *Como nos conheceu:* ${howFound}`,
-      '',
-      '_Aguardo a confirmação! 🙏_',
-    ]
-
-    window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(lines.join('\n'))}`, '_blank')
     setSending(false)
     setItems([])
     setPayment('')
