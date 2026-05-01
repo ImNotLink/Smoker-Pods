@@ -431,8 +431,8 @@ export default function HomePage() {
           borderBottom: '1px solid rgba(255,255,255,0.08)',
         }}>
         <a href="/" className="flex items-center no-underline">
-          <img src="/Logo Nova sem fundo.png" alt="SmokePods"
-            style={{ height: 'clamp(2rem, 5vw, 3rem)', width: 'auto', objectFit: 'contain' }} />
+          <img src="/logo_trimmed.png" alt="SmokePods"
+            style={{ height: 'clamp(40px, 5vw, 64px)', width: 'auto', objectFit: 'contain' }} />
         </a>
 
         <div className="flex items-center gap-2 sm:gap-3">
