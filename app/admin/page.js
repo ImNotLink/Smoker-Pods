@@ -489,11 +489,13 @@ export default function AdminPage() {
 
         {/* Row 1: logo + section tabs + logout */}
         <div className="flex items-center justify-between px-4 py-2.5">
-          <div className="flex items-center gap-2">
-            <I.Logo />
-            <span className="font-black text-sm text-white">
-              SmokePods <span className="text-white/30 font-normal text-xs">Admin</span>
-            </span>
+          <div className="flex items-center">
+            <img
+              src="/Logo Nova sem fundo.png"
+              alt="SmokePods"
+              className="h-8 object-contain"
+              style={{ filter: 'drop-shadow(0 0 6px rgba(59,130,246,0.4))' }}
+            />
           </div>
           <div className="flex items-center gap-1">
             {[
@@ -546,18 +548,13 @@ export default function AdminPage() {
         }}
       >
         {/* Logo */}
-        <div className="flex items-center gap-2 px-2 mb-7">
+        <div className="flex items-center px-2 mb-7">
           <img
-            src="/Logo_pod.png"
+            src="/Logo Nova sem fundo.png"
             alt="SmokePods"
-            className="w-7 h-7 object-contain flex-shrink-0"
-            style={{ filter: 'drop-shadow(0 0 5px rgba(59,130,246,0.5))' }}
+            className="h-10 object-contain"
+            style={{ filter: 'drop-shadow(0 0 8px rgba(59,130,246,0.4))' }}
           />
-          <span className="font-black text-base tracking-tight flex items-center gap-1.5">
-            <span style={{ color: '#9ca3af' }}>Smoke</span>
-            <span style={{ color: '#ffffff', textShadow: '0 0 12px #60a5fa, 0 0 24px #3b82f6' }}>Pods</span>
-            <I.Logo />
-          </span>
         </div>
 
         {/* City tabs */}
