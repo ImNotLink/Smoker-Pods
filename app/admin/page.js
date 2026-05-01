@@ -73,7 +73,6 @@ function ProductForm({ initial, onSave, onCancel, saving }) {
 
   const set = (k, v) => setF((p) => ({ ...p, [k]: v }))
 
-  // Calcula stock_qty como soma de todos os sabores
   const totalStock = Object.values(f.flavor_stock || {}).reduce((a, b) => a + (parseInt(b) || 0), 0)
 
   function addFlavor() {
@@ -186,30 +185,27 @@ function ProductForm({ initial, onSave, onCancel, saving }) {
         </div>
       </div>
 
-      {/* On sale only (stock is now per-flavor) */}
+      {/* On sale */}
       <div>
-        <div>
-          <label className={labelCls}>Promoção ativa</label>
-          <button
-            type="button"
-            onClick={() => set('on_sale', !f.on_sale)}
-            className="w-full h-[42px] rounded-xl text-sm font-semibold transition-all"
-            style={{
-              background: f.on_sale ? 'rgba(59,130,246,0.15)' : 'rgba(255,255,255,0.05)',
-              border: f.on_sale ? '1px solid rgba(59,130,246,0.5)' : '1px solid rgba(255,255,255,0.08)',
-              color: f.on_sale ? '#93c5fd' : 'rgba(255,255,255,0.35)',
-            }}
-          >
-            {f.on_sale ? '✓ Ativa' : 'Inativa'}
-          </button>
-        </div>
+        <label className={labelCls}>Promoção ativa</label>
+        <button
+          type="button"
+          onClick={() => set('on_sale', !f.on_sale)}
+          className="w-full h-[42px] rounded-xl text-sm font-semibold transition-all"
+          style={{
+            background: f.on_sale ? 'rgba(59,130,246,0.15)' : 'rgba(255,255,255,0.05)',
+            border: f.on_sale ? '1px solid rgba(59,130,246,0.5)' : '1px solid rgba(255,255,255,0.08)',
+            color: f.on_sale ? '#93c5fd' : 'rgba(255,255,255,0.35)',
+          }}
+        >
+          {f.on_sale ? '✓ Ativa' : 'Inativa'}
+        </button>
       </div>
 
       {/* Flavors + Stock Table */}
       <div>
         <label className={labelCls}>Sabores & Estoque por Sabor</label>
 
-        {/* Add flavor input */}
         <div className="flex gap-2 mb-3">
           <input
             className={`${inputCls} flex-1`} style={inputStyle}
@@ -225,13 +221,11 @@ function ProductForm({ initial, onSave, onCancel, saving }) {
           >+ Adicionar</button>
         </div>
 
-        {/* Flavor stock table */}
         {f.flavors.length > 0 && (
           <div
             className="rounded-2xl overflow-hidden"
             style={{ border: '1px solid rgba(255,255,255,0.08)' }}
           >
-            {/* Table header */}
             <div
               className="grid grid-cols-[1fr_100px_36px] gap-2 px-4 py-2.5 text-xs font-semibold uppercase tracking-wider text-white/30"
               style={{ background: 'rgba(255,255,255,0.03)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}
@@ -240,7 +234,6 @@ function ProductForm({ initial, onSave, onCancel, saving }) {
               <span className="text-center">Estoque</span>
               <span></span>
             </div>
-            {/* Rows */}
             {f.flavors.map((fl, idx) => {
               const qty = f.flavor_stock[fl] ?? 0
               const isLow = qty > 0 && qty <= 3
@@ -284,7 +277,6 @@ function ProductForm({ initial, onSave, onCancel, saving }) {
                 </div>
               )
             })}
-            {/* Total row */}
             <div
               className="grid grid-cols-[1fr_100px_36px] gap-2 items-center px-4 py-2.5"
               style={{ borderTop: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.02)' }}
@@ -304,47 +296,6 @@ function ProductForm({ initial, onSave, onCancel, saving }) {
         {f.flavors.length === 0 && (
           <p className="text-white/20 text-xs mt-1">Adicione sabores acima para configurar o estoque de cada um.</p>
         )}
-      </div>
-
-      {/* Cidades */}
-      <div>
-        <label className={labelCls}>🏙 Cidades Disponíveis</label>
-        <p className="text-white/25 text-xs mb-2">
-          Sem seleção = visível em todas as cidades.
-        </p>
-        <div className="flex flex-col gap-2">
-          {CITIES.map(city => {
-            const checked = (f.cities || []).includes(city)
-            return (
-              <button
-                key={city}
-                type="button"
-                onClick={() => {
-                  const next = checked
-                    ? f.cities.filter(c => c !== city)
-                    : [...(f.cities || []), city]
-                  set('cities', next)
-                }}
-                className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all text-left w-full"
-                style={{
-                  background: checked ? 'rgba(59,130,246,0.15)' : 'rgba(255,255,255,0.04)',
-                  border: checked ? '1px solid rgba(59,130,246,0.5)' : '1px solid rgba(255,255,255,0.08)',
-                  color: checked ? '#93c5fd' : 'rgba(255,255,255,0.4)',
-                }}
-              >
-                <span
-                  className="w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 text-xs font-bold transition-all"
-                  style={{
-                    background: checked ? 'rgba(59,130,246,0.4)' : 'rgba(255,255,255,0.07)',
-                    border: checked ? '1px solid rgba(59,130,246,0.6)' : '1px solid rgba(255,255,255,0.1)',
-                    color: checked ? '#fff' : 'transparent',
-                  }}
-                >✓</span>
-                📍 {city}
-              </button>
-            )
-          })}
-        </div>
       </div>
 
       {/* Actions */}
@@ -379,9 +330,9 @@ export default function AdminPage() {
   const [delTarget, setDelTarget] = useState(null)
   const [delOrderTarget, setDelOrderTarget] = useState(null)
   const [search, setSearch] = useState('')
+  const [activeCity, setActiveCity] = useState('Buriticupu')
   const [activeTab, setActiveTab] = useState('products')
 
-  // ── Proteção client-side: verifica sessão antes de mostrar qualquer coisa ──
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session) {
@@ -393,7 +344,6 @@ export default function AdminPage() {
     })
   }, [])
 
-  // Escuta mudanças de auth (ex: token expirado)
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_OUT' || !session) {
@@ -434,7 +384,8 @@ export default function AdminPage() {
       image_url: form.image_url || null,
       flavors: form.flavors,
       flavor_stock: form.flavor_stock || {},
-      cities: form.cities || [],
+      // New products get the active city; existing products keep their cities
+      cities: form.id ? (form.cities || []) : [activeCity],
     }
 
     if (form.id) {
@@ -480,26 +431,43 @@ export default function AdminPage() {
     fetchPods()
   }
 
-  async function quickFlavorStock(podId, flavor, delta, current) {
-    const pod = pods.find(p => p.id === podId)
-    if (!pod) return
-    const newStock = { ...(pod.flavor_stock || {}) }
-    newStock[flavor] = Math.max(0, (current || 0) + delta)
-    const totalQty = Object.values(newStock).reduce((a, b) => a + b, 0)
-    await supabase.from('pods').update({ flavor_stock: newStock, stock_qty: totalQty }).eq('id', podId)
-    fetchPods()
-  }
+  // ─── Derived data per active city ──────────────────────────────────────────
+  const cityPods = pods.filter(p =>
+    (p.cities || []).length === 0 || (p.cities || []).includes(activeCity)
+  )
 
-  const filtered = pods.filter((p) => p.name.toLowerCase().includes(search.toLowerCase()))
+  const filtered = cityPods.filter(p =>
+    p.name.toLowerCase().includes(search.toLowerCase())
+  )
+
+  // Filter orders by matching their items to products available in the active city
+  const cityOrders = orders.filter(order => {
+    const items = order.items || []
+    if (items.length === 0) return true
+    return items.some(item => {
+      const pod = pods.find(p => p.name === item.name)
+      if (!pod) return true
+      return (pod.cities || []).length === 0 || (pod.cities || []).includes(activeCity)
+    })
+  })
 
   const stats = [
-    { label: 'Produtos',   val: pods.length,                                  color: '#3b82f6' },
-    { label: 'Em Estoque', val: pods.filter(p => p.stock_qty > 0).length,     color: '#22c55e' },
-    { label: 'Promoções',  val: pods.filter(p => p.on_sale).length,           color: '#f59e0b' },
-    { label: 'Esgotados',  val: pods.filter(p => p.stock_qty === 0).length,   color: '#ef4444' },
+    { label: 'Produtos',   val: cityPods.length,                                    color: '#3b82f6' },
+    { label: 'Em Estoque', val: cityPods.filter(p => p.stock_qty > 0).length,       color: '#22c55e' },
+    { label: 'Promoções',  val: cityPods.filter(p => p.on_sale).length,             color: '#f59e0b' },
+    { label: 'Esgotados',  val: cityPods.filter(p => p.stock_qty === 0).length,     color: '#ef4444' },
   ]
 
-  // Não renderiza nada até confirmar autenticação
+  function switchCity(city) {
+    setActiveCity(city)
+    setSearch('')
+  }
+
+  function switchTab(tab) {
+    setActiveTab(tab)
+    if (tab === 'orders' || tab === 'sales') fetchOrders()
+  }
+
   if (!authChecked) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: '#050505' }}>
@@ -515,51 +483,70 @@ export default function AdminPage() {
   return (
     <div className="min-h-screen flex overflow-x-hidden w-full" style={{ background: '#050505' }}>
 
-      {/* ── Mobile top bar ──────────────────────────────────────────── */}
-      <div className="md:hidden fixed top-0 left-0 right-0 z-30 flex items-center justify-between px-4 py-3"
+      {/* ── Mobile top bar ─────────────────────────────────────────────── */}
+      <div className="md:hidden fixed top-0 left-0 right-0 z-30"
         style={{ background: 'rgba(8,8,11,0.97)', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
-        <div className="flex items-center gap-2">
-          <I.Logo />
-          <span className="font-black text-sm text-white">SmokePods <span className="text-white/30 font-normal text-xs">Admin</span></span>
+
+        {/* Row 1: logo + section tabs + logout */}
+        <div className="flex items-center justify-between px-4 py-2.5">
+          <div className="flex items-center gap-2">
+            <I.Logo />
+            <span className="font-black text-sm text-white">
+              SmokePods <span className="text-white/30 font-normal text-xs">Admin</span>
+            </span>
+          </div>
+          <div className="flex items-center gap-1">
+            {[
+              { id: 'products', label: '📦' },
+              { id: 'orders',   label: '📋' },
+              { id: 'sales',    label: '📊' },
+            ].map(tab => (
+              <button key={tab.id}
+                onClick={() => switchTab(tab.id)}
+                className="w-9 h-9 rounded-lg text-base transition-all"
+                style={{
+                  background: activeTab === tab.id ? 'rgba(59,130,246,0.2)' : 'rgba(255,255,255,0.05)',
+                  border: activeTab === tab.id ? '1px solid rgba(59,130,246,0.4)' : '1px solid rgba(255,255,255,0.08)',
+                }}>
+                {tab.label}
+              </button>
+            ))}
+            <button onClick={handleLogout}
+              className="w-9 h-9 rounded-lg flex items-center justify-center ml-1 text-white/30 hover:text-white/60 transition-colors"
+              style={{ border: '1px solid rgba(255,255,255,0.08)' }}>
+              <I.Logout />
+            </button>
+          </div>
         </div>
-        {/* Mobile tab switcher */}
-        <div className="flex gap-1">
-          {[
-            { id: 'products', label: '📦' },
-            { id: 'orders',   label: '📋' },
-            { id: 'sales',    label: '📊' },
-          ].map(tab => (
-            <button key={tab.id}
-              onClick={() => { setActiveTab(tab.id); if (tab.id === 'orders' || tab.id === 'sales') fetchOrders() }}
-              className="w-9 h-9 rounded-lg text-base transition-all"
+
+        {/* Row 2: city tabs */}
+        <div className="flex gap-1.5 px-4 pb-2.5 overflow-x-auto">
+          {CITIES.map(city => (
+            <button key={city}
+              onClick={() => switchCity(city)}
+              className="px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all flex-shrink-0"
               style={{
-                background: activeTab === tab.id ? 'rgba(59,130,246,0.2)' : 'rgba(255,255,255,0.05)',
-                border: activeTab === tab.id ? '1px solid rgba(59,130,246,0.4)' : '1px solid rgba(255,255,255,0.08)',
+                background: activeCity === city ? 'rgba(59,130,246,0.2)' : 'rgba(255,255,255,0.04)',
+                border: activeCity === city ? '1px solid rgba(59,130,246,0.4)' : '1px solid rgba(255,255,255,0.08)',
+                color: activeCity === city ? '#93c5fd' : 'rgba(255,255,255,0.4)',
               }}>
-              {tab.label}
+              📍 {city}
             </button>
           ))}
         </div>
-        <div className="flex items-center gap-2">
-          <a href="/" className="text-white/30 hover:text-white/60 transition-colors text-xs flex items-center gap-1">
-            ← Vitrine
-          </a>
-          <button onClick={handleLogout} className="text-white/30 hover:text-white/60 transition-colors text-xs flex items-center gap-1">
-            <I.Logout /> Sair
-          </button>
-        </div>
       </div>
 
-      {/* ── Sidebar ─────────────────────────────────────────────────── */}
+      {/* ── Sidebar ──────────────────────────────────────────────────── */}
       <aside
-        className="fixed top-0 left-0 h-full w-56 flex-col py-7 px-4 z-20 hidden md:flex"
+        className="fixed top-0 left-0 h-full w-60 flex-col py-7 px-4 z-20 hidden md:flex"
         style={{
           background: 'rgba(8,8,11,0.95)',
           borderRight: '1px solid rgba(255,255,255,0.06)',
           backdropFilter: 'blur(20px)',
         }}
       >
-        <div className="flex items-center gap-2 px-2 mb-8">
+        {/* Logo */}
+        <div className="flex items-center gap-2 px-2 mb-7">
           <img
             src="/Logo_pod.png"
             alt="SmokePods"
@@ -567,36 +554,63 @@ export default function AdminPage() {
             style={{ filter: 'drop-shadow(0 0 5px rgba(59,130,246,0.5))' }}
           />
           <span className="font-black text-base tracking-tight flex items-center gap-1.5">
-            <span style={{ color: '#9ca3af' }}>Smoke</span><span style={{ color: '#ffffff', textShadow: '0 0 12px #60a5fa, 0 0 24px #3b82f6' }}>Pods</span>
+            <span style={{ color: '#9ca3af' }}>Smoke</span>
+            <span style={{ color: '#ffffff', textShadow: '0 0 12px #60a5fa, 0 0 24px #3b82f6' }}>Pods</span>
             <I.Logo />
           </span>
         </div>
 
-        <div className="flex-1 space-y-1">
-          {[
-            { id: 'products', label: '📦 Produtos' },
-            { id: 'orders',   label: '📋 Pedidos' },
-            { id: 'sales',    label: '📊 Vendas' },
-          ].map(tab => (
-            <button
-              key={tab.id}
-              onClick={() => {
-                setActiveTab(tab.id)
-                if (tab.id === 'orders' || tab.id === 'sales') fetchOrders()
-              }}
-              className="w-full text-left px-3 py-2.5 rounded-xl text-sm font-semibold transition-all"
-              style={{
-                background: activeTab === tab.id ? 'rgba(59,130,246,0.12)' : 'transparent',
-                border: activeTab === tab.id ? '1px solid rgba(59,130,246,0.2)' : '1px solid transparent',
-                color: activeTab === tab.id ? '#93c5fd' : 'rgba(255,255,255,0.35)',
-              }}
-            >
-              {tab.label}
-            </button>
-          ))}
+        {/* City tabs */}
+        <div className="mb-2">
+          <p className="text-white/20 text-[10px] font-bold uppercase tracking-[0.12em] px-2 mb-2">Cidade</p>
+          <div className="space-y-0.5">
+            {CITIES.map(city => (
+              <button
+                key={city}
+                onClick={() => switchCity(city)}
+                className="w-full text-left px-3 py-2.5 rounded-xl text-sm font-semibold transition-all"
+                style={{
+                  background: activeCity === city ? 'rgba(59,130,246,0.15)' : 'transparent',
+                  border: activeCity === city ? '1px solid rgba(59,130,246,0.25)' : '1px solid transparent',
+                  color: activeCity === city ? '#93c5fd' : 'rgba(255,255,255,0.35)',
+                }}
+              >
+                📍 {city}
+              </button>
+            ))}
+          </div>
         </div>
 
-        <div className="space-y-1">
+        {/* Divider */}
+        <div className="my-4 mx-2" style={{ height: '1px', background: 'rgba(255,255,255,0.06)' }} />
+
+        {/* Section tabs */}
+        <div className="flex-1">
+          <p className="text-white/20 text-[10px] font-bold uppercase tracking-[0.12em] px-2 mb-2">Seção</p>
+          <div className="space-y-0.5">
+            {[
+              { id: 'products', label: '📦 Produtos' },
+              { id: 'orders',   label: '📋 Pedidos' },
+              { id: 'sales',    label: '📊 Vendas' },
+            ].map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => switchTab(tab.id)}
+                className="w-full text-left px-3 py-2.5 rounded-xl text-sm font-semibold transition-all"
+                style={{
+                  background: activeTab === tab.id ? 'rgba(59,130,246,0.12)' : 'transparent',
+                  border: activeTab === tab.id ? '1px solid rgba(59,130,246,0.2)' : '1px solid transparent',
+                  color: activeTab === tab.id ? '#93c5fd' : 'rgba(255,255,255,0.35)',
+                }}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="space-y-0.5">
           <a
             href="/"
             className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm text-white/30 hover:text-white/60 transition-colors"
@@ -612,168 +626,178 @@ export default function AdminPage() {
         </div>
       </aside>
 
-      {/* ── Main ────────────────────────────────────────────────────── */}
-      <main className="md:ml-56 flex-1 min-w-0 overflow-x-hidden p-4 sm:p-6 md:p-8 pt-20 md:pt-8">
+      {/* ── Main ─────────────────────────────────────────────────────── */}
+      <main className="md:ml-60 flex-1 min-w-0 overflow-x-hidden p-4 sm:p-6 md:p-8 pt-[7.5rem] md:pt-8">
+
+        {/* ════ PRODUTOS TAB ════ */}
         {activeTab === 'products' && (
           <>
-            {/* Top bar */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-white text-2xl font-black tracking-tight">Produtos</h1>
-            <p className="text-white/30 text-sm mt-0.5">Gerencie o catálogo da loja</p>
-          </div>
-          <button
-            onClick={() => setEditTarget(EMPTY)}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-white text-sm transition-all hover:brightness-110 active:scale-[0.97]"
-            style={{
-              background: 'linear-gradient(135deg, #1d4ed8, #3b82f6)',
-              boxShadow: '0 0 20px rgba(59,130,246,0.3)',
-            }}
-          >
-            <I.Plus /> Novo Produto
-          </button>
-        </div>
-
-        {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          {stats.map((s) => (
-            <div
-              key={s.label}
-              className="rounded-2xl p-5"
-              style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
-            >
-              <p className="text-white/30 text-xs font-semibold uppercase tracking-wider">{s.label}</p>
-              <p className="text-3xl font-black mt-1.5" style={{ color: s.color }}>{s.val}</p>
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <p className="text-white/30 text-xs font-semibold uppercase tracking-widest mb-1">📍 {activeCity}</p>
+                <h1 className="text-white text-2xl font-black tracking-tight">Produtos</h1>
+                <p className="text-white/30 text-sm mt-0.5">Gerencie o catálogo de {activeCity}</p>
+              </div>
+              <button
+                onClick={() => setEditTarget(EMPTY)}
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-white text-sm transition-all hover:brightness-110 active:scale-[0.97]"
+                style={{
+                  background: 'linear-gradient(135deg, #1d4ed8, #3b82f6)',
+                  boxShadow: '0 0 20px rgba(59,130,246,0.3)',
+                }}
+              >
+                <I.Plus /> Novo Produto
+              </button>
             </div>
-          ))}
-        </div>
 
-        {/* Search */}
-        <input
-          type="text"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Buscar produto..."
-          className="w-full max-w-xs px-4 py-2.5 rounded-xl text-white text-sm placeholder-white/20 outline-none border border-white/[0.08] focus:border-blue-500/40 transition-colors mb-5"
-          style={{ background: 'rgba(255,255,255,0.04)' }}
-        />
+            {/* Stats */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+              {stats.map((s) => (
+                <div
+                  key={s.label}
+                  className="rounded-2xl p-5"
+                  style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
+                >
+                  <p className="text-white/30 text-xs font-semibold uppercase tracking-wider">{s.label}</p>
+                  <p className="text-3xl font-black mt-1.5" style={{ color: s.color }}>{s.val}</p>
+                </div>
+              ))}
+            </div>
 
-        {/* Table */}
-        {loading ? (
-          <div className="flex items-center justify-center h-40">
-            <div className="w-7 h-7 rounded-full border-2 border-t-transparent animate-spin"
-              style={{ borderColor: 'rgba(59,130,246,0.3)', borderTopColor: '#3b82f6' }} />
-          </div>
-        ) : (
-          <div
-            className="rounded-2xl overflow-x-auto"
-            style={{ border: '1px solid rgba(255,255,255,0.07)' }}
-          >
-            <table className="w-full text-sm min-w-[600px]">
-              <thead>
-                <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.02)' }}>
-                  {['Produto', 'Sabores', 'Preço', 'Promo', 'Estoque', 'Ações'].map((h) => (
-                    <th key={h} className="text-left px-5 py-3.5 text-white/25 text-xs font-semibold uppercase tracking-wider">
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.length === 0 ? (
-                  <tr><td colSpan={6} className="text-center text-white/20 py-12 text-sm">Nenhum produto.</td></tr>
-                ) : filtered.map((pod, idx) => (
-                  <tr
-                    key={pod.id}
-                    className="transition-colors hover:bg-white/[0.015]"
-                    style={{ borderBottom: idx < filtered.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}
-                  >
-                    {/* Product */}
-                    <td className="px-5 py-4">
-                      <div className="flex items-center gap-3">
-                        <div
-                          className="w-10 h-10 rounded-xl flex-shrink-0 overflow-hidden flex items-center justify-center"
-                          style={{ background: 'rgba(59,130,246,0.07)' }}
-                        >
-                          {pod.image_url
-                            ? <img src={pod.image_url} alt="" className="w-full h-full object-contain p-1" />
-                            : <span className="text-blue-400/20 text-lg">📦</span>
-                          }
-                        </div>
-                        <span className="text-white font-semibold">{pod.name}</span>
-                      </div>
-                    </td>
+            {/* Search */}
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Buscar produto..."
+              className="w-full max-w-xs px-4 py-2.5 rounded-xl text-white text-sm placeholder-white/20 outline-none border border-white/[0.08] focus:border-blue-500/40 transition-colors mb-5"
+              style={{ background: 'rgba(255,255,255,0.04)' }}
+            />
 
-                    {/* Flavors */}
-                    <td className="px-5 py-4">
-                      <div className="flex flex-wrap gap-1">
-                        {pod.flavors.slice(0, 2).map((fl) => (
-                          <span key={fl}
-                            className="px-2 py-0.5 rounded-full text-xs text-blue-300"
-                            style={{ background: 'rgba(59,130,246,0.1)' }}
-                          >{fl}</span>
-                        ))}
-                        {pod.flavors.length > 2 && (
-                          <span className="px-2 py-0.5 rounded-full text-xs text-white/25">+{pod.flavors.length - 2}</span>
-                        )}
-                      </div>
-                    </td>
+            {/* Table */}
+            {loading ? (
+              <div className="flex items-center justify-center h-40">
+                <div className="w-7 h-7 rounded-full border-2 border-t-transparent animate-spin"
+                  style={{ borderColor: 'rgba(59,130,246,0.3)', borderTopColor: '#3b82f6' }} />
+              </div>
+            ) : (
+              <div
+                className="rounded-2xl overflow-x-auto"
+                style={{ border: '1px solid rgba(255,255,255,0.07)' }}
+              >
+                <table className="w-full text-sm min-w-[600px]">
+                  <thead>
+                    <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.02)' }}>
+                      {['Produto', 'Sabores', 'Preço', 'Promo', 'Estoque', 'Ações'].map((h) => (
+                        <th key={h} className="text-left px-5 py-3.5 text-white/25 text-xs font-semibold uppercase tracking-wider">
+                          {h}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filtered.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} className="text-center text-white/20 py-12 text-sm">
+                          Nenhum produto em {activeCity}.
+                        </td>
+                      </tr>
+                    ) : filtered.map((pod, idx) => (
+                      <tr
+                        key={pod.id}
+                        className="transition-colors hover:bg-white/[0.015]"
+                        style={{ borderBottom: idx < filtered.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}
+                      >
+                        {/* Product */}
+                        <td className="px-5 py-4">
+                          <div className="flex items-center gap-3">
+                            <div
+                              className="w-10 h-10 rounded-xl flex-shrink-0 overflow-hidden flex items-center justify-center"
+                              style={{ background: 'rgba(59,130,246,0.07)' }}
+                            >
+                              {pod.image_url
+                                ? <img src={pod.image_url} alt="" className="w-full h-full object-contain p-1" />
+                                : <span className="text-blue-400/20 text-lg">📦</span>
+                              }
+                            </div>
+                            <span className="text-white font-semibold">{pod.name}</span>
+                          </div>
+                        </td>
 
-                    {/* Price */}
-                    <td className="px-5 py-4">
-                      <span className="text-white font-semibold">R$ {pod.price.toFixed(2).replace('.', ',')}</span>
-                    </td>
+                        {/* Flavors */}
+                        <td className="px-5 py-4">
+                          <div className="flex flex-wrap gap-1">
+                            {(pod.flavors || []).slice(0, 2).map((fl) => (
+                              <span key={fl}
+                                className="px-2 py-0.5 rounded-full text-xs text-blue-300"
+                                style={{ background: 'rgba(59,130,246,0.1)' }}
+                              >{fl}</span>
+                            ))}
+                            {(pod.flavors || []).length > 2 && (
+                              <span className="px-2 py-0.5 rounded-full text-xs text-white/25">
+                                +{pod.flavors.length - 2}
+                              </span>
+                            )}
+                          </div>
+                        </td>
 
-                    {/* Promo */}
-                    <td className="px-5 py-4">
-                      {pod.on_sale && pod.promo_price ? (
-                        <span className="text-blue-400 text-xs font-semibold">
-                          R$ {pod.promo_price.toFixed(2).replace('.', ',')}
-                        </span>
-                      ) : (
-                        <span className="text-white/20 text-xs">—</span>
-                      )}
-                    </td>
+                        {/* Price */}
+                        <td className="px-5 py-4">
+                          <span className="text-white font-semibold">
+                            R$ {Number(pod.price).toFixed(2).replace('.', ',')}
+                          </span>
+                        </td>
 
-                    {/* Stock */}
-                    <td className="px-5 py-4">
-                      <div className="flex items-center gap-1.5">
-                        <button
-                          onClick={() => quickStock(pod.id, -1, pod.stock_qty)}
-                          className="w-6 h-6 rounded-lg flex items-center justify-center text-white/30 hover:text-white border border-white/[0.08] transition-all text-sm font-bold"
-                        >−</button>
-                        <span
-                          className="min-w-[2rem] text-center font-bold text-sm"
-                          style={{ color: pod.stock_qty === 0 ? '#ef4444' : pod.stock_qty <= 3 ? '#f59e0b' : '#22c55e' }}
-                        >
-                          {pod.stock_qty}
-                        </span>
-                        <button
-                          onClick={() => quickStock(pod.id, 1, pod.stock_qty)}
-                          className="w-6 h-6 rounded-lg flex items-center justify-center text-white/30 hover:text-white border border-white/[0.08] transition-all text-sm font-bold"
-                        >+</button>
-                      </div>
-                    </td>
+                        {/* Promo */}
+                        <td className="px-5 py-4">
+                          {pod.on_sale && pod.promo_price ? (
+                            <span className="text-blue-400 text-xs font-semibold">
+                              R$ {Number(pod.promo_price).toFixed(2).replace('.', ',')}
+                            </span>
+                          ) : (
+                            <span className="text-white/20 text-xs">—</span>
+                          )}
+                        </td>
 
-                    {/* Actions */}
-                    <td className="px-5 py-4">
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => setEditTarget(pod)}
-                          className="w-8 h-8 rounded-xl flex items-center justify-center text-white/30 hover:text-blue-400 border border-white/[0.08] hover:border-blue-500/40 transition-all"
-                        ><I.Edit /></button>
-                        <button
-                          onClick={() => setDelTarget(pod)}
-                          className="w-8 h-8 rounded-xl flex items-center justify-center text-white/30 hover:text-red-400 border border-white/[0.08] hover:border-red-500/40 transition-all"
-                        ><I.Trash /></button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+                        {/* Stock */}
+                        <td className="px-5 py-4">
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              onClick={() => quickStock(pod.id, -1, pod.stock_qty)}
+                              className="w-6 h-6 rounded-lg flex items-center justify-center text-white/30 hover:text-white border border-white/[0.08] transition-all text-sm font-bold"
+                            >−</button>
+                            <span
+                              className="min-w-[2rem] text-center font-bold text-sm"
+                              style={{ color: pod.stock_qty === 0 ? '#ef4444' : pod.stock_qty <= 3 ? '#f59e0b' : '#22c55e' }}
+                            >
+                              {pod.stock_qty}
+                            </span>
+                            <button
+                              onClick={() => quickStock(pod.id, 1, pod.stock_qty)}
+                              className="w-6 h-6 rounded-lg flex items-center justify-center text-white/30 hover:text-white border border-white/[0.08] transition-all text-sm font-bold"
+                            >+</button>
+                          </div>
+                        </td>
+
+                        {/* Actions */}
+                        <td className="px-5 py-4">
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => setEditTarget(pod)}
+                              className="w-8 h-8 rounded-xl flex items-center justify-center text-white/30 hover:text-blue-400 border border-white/[0.08] hover:border-blue-500/40 transition-all"
+                            ><I.Edit /></button>
+                            <button
+                              onClick={() => setDelTarget(pod)}
+                              className="w-8 h-8 rounded-xl flex items-center justify-center text-white/30 hover:text-red-400 border border-white/[0.08] hover:border-red-500/40 transition-all"
+                            ><I.Trash /></button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </>
         )}
 
@@ -782,8 +806,11 @@ export default function AdminPage() {
           <div>
             <div className="flex items-center justify-between mb-8">
               <div>
+                <p className="text-white/30 text-xs font-semibold uppercase tracking-widest mb-1">📍 {activeCity}</p>
                 <h1 className="text-white text-2xl font-black tracking-tight">Pedidos</h1>
-                <p className="text-white/30 text-sm mt-0.5">{orders.length} pedido{orders.length !== 1 ? 's' : ''} registrado{orders.length !== 1 ? 's' : ''}</p>
+                <p className="text-white/30 text-sm mt-0.5">
+                  {cityOrders.length} pedido{cityOrders.length !== 1 ? 's' : ''} em {activeCity}
+                </p>
               </div>
             </div>
             {ordersLoading ? (
@@ -791,8 +818,10 @@ export default function AdminPage() {
                 <div className="w-7 h-7 rounded-full border-2 border-t-transparent animate-spin"
                   style={{ borderColor: 'rgba(59,130,246,0.3)', borderTopColor: '#3b82f6' }} />
               </div>
-            ) : orders.length === 0 ? (
-              <div className="text-center text-white/20 py-20 text-sm">Nenhum pedido ainda.</div>
+            ) : cityOrders.length === 0 ? (
+              <div className="text-center text-white/20 py-20 text-sm">
+                Nenhum pedido em {activeCity} ainda.
+              </div>
             ) : (
               <div className="rounded-2xl overflow-x-auto" style={{ border: '1px solid rgba(255,255,255,0.07)' }}>
                 <table className="w-full text-sm min-w-[600px]">
@@ -804,10 +833,10 @@ export default function AdminPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {orders.map((order, idx) => (
+                    {cityOrders.map((order, idx) => (
                       <tr key={order.id}
                         className="transition-colors hover:bg-white/[0.015]"
-                        style={{ borderBottom: idx < orders.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}>
+                        style={{ borderBottom: idx < cityOrders.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}>
                         <td className="px-5 py-4 text-white/50 text-xs whitespace-nowrap">
                           {new Date(order.created_at).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' })}
                         </td>
@@ -854,8 +883,9 @@ export default function AdminPage() {
         {activeTab === 'sales' && (
           <div>
             <div className="mb-8">
+              <p className="text-white/30 text-xs font-semibold uppercase tracking-widest mb-1">📍 {activeCity}</p>
               <h1 className="text-white text-2xl font-black tracking-tight">Painel de Vendas</h1>
-              <p className="text-white/30 text-sm mt-0.5">Resumo baseado nos pedidos registrados</p>
+              <p className="text-white/30 text-sm mt-0.5">Resumo baseado nos pedidos de {activeCity}</p>
             </div>
 
             {ordersLoading ? (
@@ -864,38 +894,33 @@ export default function AdminPage() {
                   style={{ borderColor: 'rgba(59,130,246,0.3)', borderTopColor: '#3b82f6' }} />
               </div>
             ) : (() => {
-              // Calcula métricas
-              const totalRevenue = orders.reduce((s, o) => s + Number(o.total), 0)
-              const totalOrders = orders.length
+              const totalRevenue = cityOrders.reduce((s, o) => s + Number(o.total), 0)
+              const totalOrders = cityOrders.length
               const avgTicket = totalOrders > 0 ? totalRevenue / totalOrders : 0
 
-              // Produtos mais pedidos
               const productCount = {}
-              orders.forEach(o => (o.items || []).forEach(item => {
-                const key = item.name
-                productCount[key] = (productCount[key] || 0) + item.qty
+              cityOrders.forEach(o => (o.items || []).forEach(item => {
+                productCount[item.name] = (productCount[item.name] || 0) + item.qty
               }))
               const topProducts = Object.entries(productCount)
                 .sort((a, b) => b[1] - a[1])
                 .slice(0, 8)
               const maxCount = topProducts[0]?.[1] || 1
 
-              // Pagamentos
               const paymentCount = {}
-              orders.forEach(o => { paymentCount[o.payment] = (paymentCount[o.payment] || 0) + 1 })
+              cityOrders.forEach(o => { paymentCount[o.payment] = (paymentCount[o.payment] || 0) + 1 })
 
-              // Como nos conheceu
               const sourceCount = {}
-              orders.forEach(o => { sourceCount[o.how_found] = (sourceCount[o.how_found] || 0) + 1 })
+              cityOrders.forEach(o => { sourceCount[o.how_found] = (sourceCount[o.how_found] || 0) + 1 })
 
               return (
                 <div className="space-y-6">
-                  {/* Cards de resumo */}
+                  {/* Summary cards */}
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     {[
                       { label: 'Total em Pedidos', value: `R$ ${totalRevenue.toFixed(2).replace('.', ',')}`, color: '#3b82f6' },
-                      { label: 'Nº de Pedidos', value: totalOrders, color: '#22c55e' },
-                      { label: 'Ticket Médio', value: `R$ ${avgTicket.toFixed(2).replace('.', ',')}`, color: '#f59e0b' },
+                      { label: 'Nº de Pedidos',    value: totalOrders,                                        color: '#22c55e' },
+                      { label: 'Ticket Médio',     value: `R$ ${avgTicket.toFixed(2).replace('.', ',')}`,    color: '#f59e0b' },
                     ].map(s => (
                       <div key={s.label} className="rounded-2xl p-5"
                         style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
@@ -905,15 +930,15 @@ export default function AdminPage() {
                     ))}
                   </div>
 
-                  {/* Últimos pedidos com data e hora */}
-                  {orders.length > 0 && (
+                  {/* Recent orders */}
+                  {cityOrders.length > 0 && (
                     <div className="rounded-2xl overflow-hidden"
                       style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
                       <div className="px-5 py-4 border-b" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
                         <h3 className="text-white font-bold text-sm">🕐 Últimos Pedidos</h3>
                       </div>
-                      <div className="divide-y" style={{ '--tw-divide-opacity': 1 }}>
-                        {orders.slice(0, 10).map((order) => {
+                      <div>
+                        {cityOrders.slice(0, 10).map((order) => {
                           const d = new Date(order.created_at)
                           const date = d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })
                           const time = d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
@@ -921,14 +946,11 @@ export default function AdminPage() {
                           return (
                             <div key={order.id} className="px-5 py-3.5 flex items-center gap-4"
                               style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-                              {/* Data e hora */}
                               <div className="flex-shrink-0 text-center min-w-[80px]">
                                 <p className="text-white font-bold text-xs">{date}</p>
                                 <p className="text-blue-400 font-semibold text-xs mt-0.5">{time}</p>
                               </div>
-                              {/* Divider */}
                               <div className="w-px h-8 flex-shrink-0" style={{ background: 'rgba(255,255,255,0.08)' }} />
-                              {/* Items */}
                               <div className="flex-1 min-w-0">
                                 <p className="text-white/70 text-xs truncate">{itemsSummary}</p>
                                 <div className="flex items-center gap-2 mt-1">
@@ -937,7 +959,6 @@ export default function AdminPage() {
                                   <span className="text-white/30 text-xs">{order.how_found}</span>
                                 </div>
                               </div>
-                              {/* Total */}
                               <div className="flex-shrink-0">
                                 <span className="font-black text-sm" style={{ color: '#3b82f6' }}>
                                   R$ {Number(order.total).toFixed(2).replace('.', ',')}
@@ -951,7 +972,7 @@ export default function AdminPage() {
                   )}
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Produtos mais pedidos */}
+                    {/* Top products */}
                     <div className="rounded-2xl p-5" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
                       <h3 className="text-white font-bold text-sm mb-4">🏆 Produtos Mais Pedidos</h3>
                       {topProducts.length === 0 ? (
@@ -978,33 +999,37 @@ export default function AdminPage() {
                     </div>
 
                     <div className="space-y-4">
-                      {/* Formas de pagamento */}
+                      {/* Payment methods */}
                       <div className="rounded-2xl p-5" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
                         <h3 className="text-white font-bold text-sm mb-3">💳 Pagamentos</h3>
                         <div className="space-y-2">
-                          {Object.entries(paymentCount).sort((a,b)=>b[1]-a[1]).map(([method, count]) => (
+                          {Object.entries(paymentCount).sort((a, b) => b[1] - a[1]).map(([method, count]) => (
                             <div key={method} className="flex justify-between items-center">
                               <span className="text-white/60 text-xs">{method}</span>
                               <span className="px-2 py-0.5 rounded-full text-xs font-bold text-white/70"
                                 style={{ background: 'rgba(255,255,255,0.07)' }}>{count}</span>
                             </div>
                           ))}
-                          {Object.keys(paymentCount).length === 0 && <p className="text-white/20 text-xs">Sem dados.</p>}
+                          {Object.keys(paymentCount).length === 0 && (
+                            <p className="text-white/20 text-xs">Sem dados.</p>
+                          )}
                         </div>
                       </div>
 
-                      {/* Como nos conheceu */}
+                      {/* Source */}
                       <div className="rounded-2xl p-5" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
                         <h3 className="text-white font-bold text-sm mb-3">📣 Como nos conheceu</h3>
                         <div className="space-y-2">
-                          {Object.entries(sourceCount).sort((a,b)=>b[1]-a[1]).map(([source, count]) => (
+                          {Object.entries(sourceCount).sort((a, b) => b[1] - a[1]).map(([source, count]) => (
                             <div key={source} className="flex justify-between items-center">
                               <span className="text-white/60 text-xs">{source}</span>
                               <span className="px-2 py-0.5 rounded-full text-xs font-bold text-white/70"
                                 style={{ background: 'rgba(255,255,255,0.07)' }}>{count}</span>
                             </div>
                           ))}
-                          {Object.keys(sourceCount).length === 0 && <p className="text-white/20 text-xs">Sem dados.</p>}
+                          {Object.keys(sourceCount).length === 0 && (
+                            <p className="text-white/20 text-xs">Sem dados.</p>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -1016,39 +1041,58 @@ export default function AdminPage() {
         )}
       </main>
 
-      {/* Edit / Create Modal */}
-      <Modal open={editTarget !== null} onClose={() => setEditTarget(null)}
-        title={editTarget?.id ? 'Editar Produto' : 'Novo Produto'}>
+      {/* ── Edit / Create Modal ─────────────────────────────────────── */}
+      <Modal
+        open={editTarget !== null}
+        onClose={() => setEditTarget(null)}
+        title={editTarget?.id ? `Editar Produto — ${activeCity}` : `Novo Produto — ${activeCity}`}
+      >
         {editTarget !== null && (
-          <ProductForm initial={editTarget} onSave={handleSave} onCancel={() => setEditTarget(null)} saving={saving} />
+          <ProductForm
+            initial={editTarget}
+            onSave={handleSave}
+            onCancel={() => setEditTarget(null)}
+            saving={saving}
+          />
         )}
       </Modal>
 
-      {/* Delete order confirm */}
+      {/* ── Delete order confirm ────────────────────────────────────── */}
       <Modal open={delOrderTarget !== null} onClose={() => setDelOrderTarget(null)} title="Excluir Pedido">
         <p className="text-white/50 text-sm mb-6">
-          Excluir o pedido de <span className="text-white font-semibold">R$ {Number(delOrderTarget?.total || 0).toFixed(2).replace('.', ',')}</span>? Esta ação é irreversível.
+          Excluir o pedido de{' '}
+          <span className="text-white font-semibold">
+            R$ {Number(delOrderTarget?.total || 0).toFixed(2).replace('.', ',')}
+          </span>? Esta ação é irreversível.
         </p>
         <div className="flex gap-3">
           <button onClick={() => setDelOrderTarget(null)}
-            className="flex-1 py-3 rounded-xl text-sm text-white/40 border border-white/[0.08] hover:border-white/20 transition-colors">Cancelar</button>
+            className="flex-1 py-3 rounded-xl text-sm text-white/40 border border-white/[0.08] hover:border-white/20 transition-colors">
+            Cancelar
+          </button>
           <button onClick={handleDeleteOrder}
             className="flex-1 py-3 rounded-xl text-sm font-bold text-white transition-all hover:brightness-110"
-            style={{ background: 'linear-gradient(135deg, #dc2626, #ef4444)' }}>Excluir</button>
+            style={{ background: 'linear-gradient(135deg, #dc2626, #ef4444)' }}>
+            Excluir
+          </button>
         </div>
       </Modal>
 
-      {/* Delete confirm */}
+      {/* ── Delete product confirm ──────────────────────────────────── */}
       <Modal open={delTarget !== null} onClose={() => setDelTarget(null)} title="Confirmar Exclusão">
         <p className="text-white/50 text-sm mb-6">
           Excluir <span className="text-white font-semibold">"{delTarget?.name}"</span>? Esta ação é irreversível.
         </p>
         <div className="flex gap-3">
           <button onClick={() => setDelTarget(null)}
-            className="flex-1 py-3 rounded-xl text-sm text-white/40 border border-white/[0.08] hover:border-white/20 transition-colors">Cancelar</button>
+            className="flex-1 py-3 rounded-xl text-sm text-white/40 border border-white/[0.08] hover:border-white/20 transition-colors">
+            Cancelar
+          </button>
           <button onClick={handleDelete}
             className="flex-1 py-3 rounded-xl text-sm font-bold text-white transition-all hover:brightness-110"
-            style={{ background: 'linear-gradient(135deg, #dc2626, #ef4444)' }}>Excluir</button>
+            style={{ background: 'linear-gradient(135deg, #dc2626, #ef4444)' }}>
+            Excluir
+          </button>
         </div>
       </Modal>
     </div>
