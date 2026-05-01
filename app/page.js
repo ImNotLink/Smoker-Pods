@@ -7,18 +7,7 @@ import Cart from '@/components/Cart'
 const CITIES = ['Buriticupu', 'Imperatriz', 'Rondon do Pará']
 
 // ─── Icons ─────────────────────────────────────────────────────────────────────
-function LogoIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-      <path d="M13 2L4.5 13.5H11L10 22L19.5 10.5H13L13 2Z" fill="url(#logoGrad)" />
-      <defs>
-        <linearGradient id="logoGrad" x1="4.5" y1="2" x2="19.5" y2="22" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#3b82f6"/><stop offset="1" stopColor="#60a5fa"/>
-        </linearGradient>
-      </defs>
-    </svg>
-  )
-}
+
 function CartIcon({ size = 18 }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -50,13 +39,8 @@ function CityModal({ onSelect }) {
       <div className="w-full max-w-sm">
         {/* Logo */}
         <div className="flex flex-col items-center mb-8">
-          <img src="/Logo_pod.png" alt="SmokePods" className="w-16 h-16 object-contain mb-4"
-            style={{ filter: 'drop-shadow(0 0 16px rgba(59,130,246,0.6))' }} />
-          <div className="flex items-center gap-2">
-            <span className="font-black text-2xl" style={{ color: '#9ca3af' }}>Smoke</span>
-            <span className="font-black text-2xl" style={{ color: '#fff', textShadow: '0 0 16px #60a5fa, 0 0 32px #3b82f6' }}>Pods</span>
-            <LogoIcon />
-          </div>
+          <img src="/logo_trimmed.png" alt="SmokePods" className="h-20 w-auto object-contain mb-4"
+            style={{ filter: 'drop-shadow(0 0 20px rgba(59,130,246,0.6))' }} />
           <p className="text-white/40 text-sm mt-2">Selecione sua cidade para continuar</p>
         </div>
 

@@ -511,6 +511,12 @@ export default function AdminPage() {
                 {tab.label}
               </button>
             ))}
+            <a href="/"
+              className="w-9 h-9 rounded-lg flex items-center justify-center ml-1 text-white/30 hover:text-white/60 transition-colors text-xs font-bold"
+              style={{ border: '1px solid rgba(255,255,255,0.08)' }}
+              title="Ver Vitrine">
+              🏪
+            </a>
             <button onClick={handleLogout}
               className="w-9 h-9 rounded-lg flex items-center justify-center ml-1 text-white/30 hover:text-white/60 transition-colors"
               style={{ border: '1px solid rgba(255,255,255,0.08)' }}>
