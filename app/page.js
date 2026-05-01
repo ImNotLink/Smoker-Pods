@@ -430,14 +430,25 @@ export default function HomePage() {
           WebkitBackdropFilter: 'blur(20px)',
           borderBottom: '1px solid rgba(255,255,255,0.08)',
         }}>
-        <a href="/" className="flex items-center gap-2 no-underline">
-          <img src="/Logo_pod.png" alt="SmokePods" className="w-7 h-7 sm:w-8 sm:h-8 object-contain"
-            style={{ filter: 'drop-shadow(0 0 6px rgba(59,130,246,0.5))' }} />
-          <span className="font-black text-base sm:text-lg tracking-tight flex items-center gap-1" style={{ letterSpacing: '-0.02em' }}>
-            <span style={{ color: '#9ca3af' }}>Smoke</span>
-            <span style={{ color: '#fff', textShadow: '0 0 12px #60a5fa, 0 0 24px #3b82f6' }}>Pods</span>
-            <LogoIcon />
-          </span>
+        <a href="/" className="flex items-center no-underline">
+          <div style={{ filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.7))' }}>
+            <span style={{
+              fontFamily: '"Georgia", "Palatino Linotype", "Book Antiqua", serif',
+              fontStyle: 'italic',
+              fontWeight: '900',
+              fontSize: 'clamp(1.6rem, 4vw, 2.4rem)',
+              background: 'linear-gradient(180deg, #f5f5f5 0%, #c0c0c0 18%, #ffffff 40%, #d8d8d8 58%, #909090 78%, #c8c8c8 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+              letterSpacing: '-0.01em',
+              lineHeight: '1',
+              display: 'block',
+              userSelect: 'none',
+            }}>
+              SmokePods
+            </span>
+          </div>
         </a>
 
         <div className="flex items-center gap-2 sm:gap-3">
