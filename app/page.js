@@ -431,24 +431,8 @@ export default function HomePage() {
           borderBottom: '1px solid rgba(255,255,255,0.08)',
         }}>
         <a href="/" className="flex items-center no-underline">
-          <div style={{ filter: 'drop-shadow(0 2px 6px rgba(0,0,0,0.7))' }}>
-            <span style={{
-              fontFamily: '"Georgia", "Palatino Linotype", "Book Antiqua", serif',
-              fontStyle: 'italic',
-              fontWeight: '900',
-              fontSize: 'clamp(1.6rem, 4vw, 2.4rem)',
-              background: 'linear-gradient(180deg, #f5f5f5 0%, #c0c0c0 18%, #ffffff 40%, #d8d8d8 58%, #909090 78%, #c8c8c8 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
-              letterSpacing: '-0.01em',
-              lineHeight: '1',
-              display: 'block',
-              userSelect: 'none',
-            }}>
-              SmokePods
-            </span>
-          </div>
+          <img src="/Logo Nova sem fundo.png" alt="SmokePods"
+            style={{ height: 'clamp(2rem, 5vw, 3rem)', width: 'auto', objectFit: 'contain' }} />
         </a>
 
         <div className="flex items-center gap-2 sm:gap-3">
