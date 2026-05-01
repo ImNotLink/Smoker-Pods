@@ -489,14 +489,12 @@ export default function AdminPage() {
 
         {/* Row 1: logo + section tabs + logout */}
         <div className="flex items-center justify-between px-4 py-2.5">
-          <div className="h-14 overflow-hidden rounded-lg" style={{ width: '140px' }}>
-            <img
-              src="/Logo Nova sem fundo.png"
-              alt="SmokePods"
-              className="w-full h-full object-cover"
-              style={{ objectPosition: 'center 70%', filter: 'drop-shadow(0 0 6px rgba(59,130,246,0.4))' }}
-            />
-          </div>
+          <img
+            src="/logo_trimmed.png"
+            alt="SmokePods"
+            className="h-8 w-auto object-contain"
+            style={{ filter: 'drop-shadow(0 0 6px rgba(59,130,246,0.5))' }}
+          />
           <div className="flex items-center gap-1">
             {[
               { id: 'products', label: '📦' },
@@ -548,12 +546,12 @@ export default function AdminPage() {
         }}
       >
         {/* Logo */}
-        <div className="h-14 overflow-hidden mb-7 rounded-lg">
+        <div className="px-2 mb-7">
           <img
-            src="/Logo Nova sem fundo.png"
+            src="/logo_trimmed.png"
             alt="SmokePods"
-            className="w-full h-full object-cover"
-            style={{ objectPosition: 'center 70%', filter: 'drop-shadow(0 0 8px rgba(59,130,246,0.4))' }}
+            className="h-9 w-auto object-contain"
+            style={{ filter: 'drop-shadow(0 0 8px rgba(59,130,246,0.5))' }}
           />
         </div>
 
