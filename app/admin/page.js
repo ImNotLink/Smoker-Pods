@@ -493,7 +493,7 @@ export default function AdminPage() {
             <img
               src="/Logo Nova sem fundo.png"
               alt="SmokePods"
-              className="h-12 object-contain"
+              className="h-[38px] object-contain"
               style={{ filter: 'drop-shadow(0 0 6px rgba(59,130,246,0.4))' }}
             />
           </div>
@@ -552,7 +552,7 @@ export default function AdminPage() {
           <img
             src="/Logo Nova sem fundo.png"
             alt="SmokePods"
-            className="h-14 object-contain"
+            className="h-[38px] object-contain"
             style={{ filter: 'drop-shadow(0 0 8px rgba(59,130,246,0.4))' }}
           />
         </div>
