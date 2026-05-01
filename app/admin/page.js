@@ -489,12 +489,12 @@ export default function AdminPage() {
 
         {/* Row 1: logo + section tabs + logout */}
         <div className="flex items-center justify-between px-4 py-2.5">
-          <div className="flex items-center">
+          <div className="h-14 overflow-hidden rounded-lg" style={{ width: '140px' }}>
             <img
               src="/Logo Nova sem fundo.png"
               alt="SmokePods"
-              className="h-36 object-contain"
-              style={{ filter: 'drop-shadow(0 0 6px rgba(59,130,246,0.4))' }}
+              className="w-full h-full object-cover"
+              style={{ objectPosition: 'center 70%', filter: 'drop-shadow(0 0 6px rgba(59,130,246,0.4))' }}
             />
           </div>
           <div className="flex items-center gap-1">
@@ -548,12 +548,12 @@ export default function AdminPage() {
         }}
       >
         {/* Logo */}
-        <div className="flex items-center px-2 mb-7">
+        <div className="h-14 overflow-hidden mb-7 rounded-lg">
           <img
             src="/Logo Nova sem fundo.png"
             alt="SmokePods"
-            className="h-36 object-contain"
-            style={{ filter: 'drop-shadow(0 0 8px rgba(59,130,246,0.4))' }}
+            className="w-full h-full object-cover"
+            style={{ objectPosition: 'center 70%', filter: 'drop-shadow(0 0 8px rgba(59,130,246,0.4))' }}
           />
         </div>
 
