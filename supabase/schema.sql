@@ -210,6 +210,66 @@ INSERT INTO public.cities (name, whatsapp) VALUES
 ON CONFLICT (name) DO NOTHING;
 
 -- =============================================================================
+-- 9. TRIGGER: handle_new_order
+-- Dispara após INSERT em orders e reduz o estoque de cada sabor comprado.
+-- Roda com SECURITY DEFINER (privilégio elevado) dentro da mesma transação
+-- do INSERT — se o update falhar, o pedido também é revertido.
+-- FOR UPDATE bloqueia a linha do pod e evita condição de corrida.
+-- =============================================================================
+CREATE OR REPLACE FUNCTION public.handle_new_order()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  item          JSONB;
+  pod_id        UUID;
+  pod_flavor    TEXT;
+  pod_qty       INTEGER;
+  current_stock JSONB;
+  new_qty       INTEGER;
+  new_total     INTEGER;
+BEGIN
+  FOR item IN SELECT jsonb_array_elements(NEW.items)
+  LOOP
+    pod_id     := (item->>'id')::UUID;
+    pod_flavor := item->>'flavor';
+    pod_qty    := COALESCE((item->>'qty')::INTEGER, 1);
+
+    IF pod_id IS NULL OR pod_flavor IS NULL THEN CONTINUE; END IF;
+
+    SELECT flavor_stock INTO current_stock
+    FROM public.pods
+    WHERE id = pod_id
+    FOR UPDATE;
+
+    IF current_stock IS NULL THEN CONTINUE; END IF;
+
+    new_qty       := GREATEST(0, COALESCE((current_stock ->> pod_flavor)::INTEGER, 0) - pod_qty);
+    current_stock := jsonb_set(current_stock, ARRAY[pod_flavor], to_jsonb(new_qty));
+
+    SELECT COALESCE(SUM(value::INTEGER), 0)
+    INTO new_total
+    FROM jsonb_each_text(current_stock);
+
+    UPDATE public.pods
+    SET flavor_stock = current_stock,
+        stock_qty    = new_total
+    WHERE id = pod_id;
+  END LOOP;
+
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS on_new_order ON public.orders;
+CREATE TRIGGER on_new_order
+  AFTER INSERT ON public.orders
+  FOR EACH ROW
+  EXECUTE FUNCTION public.handle_new_order();
+
+-- =============================================================================
 -- 8. ÍNDICES DE PERFORMANCE
 -- =============================================================================
 CREATE INDEX IF NOT EXISTS idx_pods_cities       ON public.pods   USING GIN (cities);

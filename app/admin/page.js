@@ -466,15 +466,6 @@ export default function AdminPage() {
     { label: 'Esgotados',  val: cityPods.filter(p => p.stock_qty === 0).length,     color: '#ef4444' },
   ]
 
-  const lowStockAlerts = cityPods
-    .flatMap(pod => {
-      if (!pod.flavor_stock || Object.keys(pod.flavor_stock).length === 0) return []
-      return Object.entries(pod.flavor_stock)
-        .filter(([, qty]) => qty <= 3)
-        .map(([flavor, qty]) => ({ productName: pod.name, flavor, qty }))
-    })
-    .sort((a, b) => a.qty - b.qty)
-
   function switchCity(city) {
     setActiveCity(city)
     setSearch('')
@@ -681,54 +672,6 @@ export default function AdminPage() {
                 </div>
               ))}
             </div>
-
-            {/* Alertas de estoque baixo */}
-            {lowStockAlerts.length > 0 && (
-              <div
-                className="mb-6 rounded-2xl overflow-hidden"
-                style={{ border: '1px solid rgba(251,146,60,0.2)', background: 'rgba(251,146,60,0.04)' }}
-              >
-                <div
-                  className="px-5 py-3 flex items-center gap-2"
-                  style={{ borderBottom: '1px solid rgba(251,146,60,0.12)' }}
-                >
-                  <span className="text-orange-400 text-sm font-bold">⚡ Alertas de Estoque</span>
-                  <span className="ml-auto text-orange-400/50 text-xs">
-                    {lowStockAlerts.length} sabor{lowStockAlerts.length !== 1 ? 'es' : ''} crítico{lowStockAlerts.length !== 1 ? 's' : ''}
-                  </span>
-                </div>
-                <div className="flex flex-wrap gap-2 px-5 py-3.5">
-                  {lowStockAlerts.slice(0, 10).map((alert, i) => (
-                    <div
-                      key={i}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium"
-                      style={{
-                        background: alert.qty === 0 ? 'rgba(239,68,68,0.1)' : 'rgba(251,146,60,0.1)',
-                        border: alert.qty === 0 ? '1px solid rgba(239,68,68,0.2)' : '1px solid rgba(251,146,60,0.2)',
-                        color: alert.qty === 0 ? '#f87171' : '#fcd34d',
-                      }}
-                    >
-                      <span className="font-semibold truncate max-w-[120px]">{alert.productName}</span>
-                      <span className="opacity-40">·</span>
-                      <span>{alert.flavor}</span>
-                      <span
-                        className="ml-1 font-black px-1.5 py-0.5 rounded-md text-[10px]"
-                        style={{
-                          background: alert.qty === 0 ? 'rgba(239,68,68,0.2)' : 'rgba(251,146,60,0.2)',
-                        }}
-                      >
-                        {alert.qty === 0 ? 'ESGOTADO' : `${alert.qty}un`}
-                      </span>
-                    </div>
-                  ))}
-                  {lowStockAlerts.length > 10 && (
-                    <span className="flex items-center px-3 py-1.5 text-xs text-orange-400/40">
-                      e mais {lowStockAlerts.length - 10}...
-                    </span>
-                  )}
-                </div>
-              </div>
-            )}
 
             {/* Search */}
             <input

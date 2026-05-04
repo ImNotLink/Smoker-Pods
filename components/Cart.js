@@ -34,7 +34,7 @@ export default function Cart({ open, onClose, items, setItems, availableFlavors 
   const [payment, setPayment] = useState('')
   const [howFound, setHowFound] = useState('')
   const [formError, setFormError] = useState('')
-
+  const [sending, setSending] = useState(false)
 
   const total = items.reduce((sum, i) => sum + i.unitPrice * i.qty, 0)
   const totalQty = items.reduce((s, i) => s + i.qty, 0)
@@ -56,7 +56,10 @@ export default function Cart({ open, onClose, items, setItems, availableFlavors 
     if (!howFound) { setFormError('Informe como nos conheceu.'); return }
     if (items.length === 0) { setFormError('Seu carrinho está vazio.'); return }
 
-    const orderItems = items.map(i => ({ name: i.name, flavor: i.selectedFlavor, qty: i.qty }))
+    setSending(true)
+
+    // id incluído para o trigger handle_new_order localizar o pod e reduzir o estoque
+    const orderItems = items.map(i => ({ id: i.id, name: i.name, flavor: i.selectedFlavor, qty: i.qty }))
 
     await supabase.from('orders').insert({
       items: orderItems,
@@ -86,6 +89,7 @@ export default function Cart({ open, onClose, items, setItems, availableFlavors 
     setItems([])
     setPayment('')
     setHowFound('')
+    setSending(false)
     onClose()
   }
 
@@ -222,11 +226,12 @@ export default function Cart({ open, onClose, items, setItems, availableFlavors 
             {formError && <p className="text-red-400 text-xs">{formError}</p>}
             <button
               onClick={checkout}
-              className="w-full flex items-center justify-center gap-2.5 py-4 rounded-2xl font-bold text-white text-sm tracking-wide transition-all hover:brightness-110 active:scale-[0.98]"
+              disabled={sending}
+              className="w-full flex items-center justify-center gap-2.5 py-4 rounded-2xl font-bold text-white text-sm tracking-wide transition-all hover:brightness-110 active:scale-[0.98] disabled:opacity-60 disabled:cursor-not-allowed"
               style={{ background: 'linear-gradient(135deg, #22c55e, #16a34a)', boxShadow: '0 0 30px rgba(34,197,94,0.25)' }}
             >
               <WAIcon />
-              Finalizar pelo WhatsApp
+              {sending ? 'Processando...' : 'Finalizar pelo WhatsApp'}
             </button>
           </div>
         )}
