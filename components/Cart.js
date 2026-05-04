@@ -61,13 +61,19 @@ export default function Cart({ open, onClose, items, setItems, availableFlavors 
     // id incluído para o trigger handle_new_order localizar o pod e reduzir o estoque
     const orderItems = items.map(i => ({ id: i.id, name: i.name, flavor: i.selectedFlavor, qty: i.qty }))
 
-    await supabase.from('orders').insert({
+    const { error: orderError } = await supabase.from('orders').insert({
       items: orderItems,
       total,
       payment,
       how_found: howFound,
       city,
     })
+
+    if (orderError) {
+      setFormError('Erro ao registrar pedido. Tente novamente.')
+      setSending(false)
+      return
+    }
 
     const lines = [
       '🛒 *Novo Pedido — Smoke Pods*',
@@ -85,12 +91,6 @@ export default function Cart({ open, onClose, items, setItems, availableFlavors 
     ]
 
     window.location.href = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(lines.join('\n'))}`
-
-    setItems([])
-    setPayment('')
-    setHowFound('')
-    setSending(false)
-    onClose()
   }
 
   const sel = {

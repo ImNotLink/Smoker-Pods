@@ -428,13 +428,26 @@ export default function AdminPage() {
   async function quickStock(id, delta, current) {
     const newQty = Math.max(0, current + delta)
     const pod = pods.find(p => p.id === id)
-    const payload = { stock_qty: newQty }
-    if (newQty === 0 && pod?.flavor_stock) {
-      payload.flavor_stock = Object.fromEntries(
-        Object.keys(pod.flavor_stock).map((fl) => [fl, 0])
-      )
+
+    // Distribui o delta proporcionalmente no flavor_stock para manter sincronia com o trigger
+    let newFlavorStock = pod?.flavor_stock || {}
+    if (Object.keys(newFlavorStock).length > 0) {
+      if (newQty === 0) {
+        newFlavorStock = Object.fromEntries(Object.keys(newFlavorStock).map(fl => [fl, 0]))
+      } else if (delta > 0) {
+        // Adiciona a unidade no primeiro sabor disponível
+        const firstFlavor = Object.keys(newFlavorStock)[0]
+        newFlavorStock = { ...newFlavorStock, [firstFlavor]: (newFlavorStock[firstFlavor] || 0) + delta }
+      } else {
+        // Remove do sabor com maior estoque
+        const topFlavor = Object.entries(newFlavorStock).sort((a, b) => b[1] - a[1])[0]?.[0]
+        if (topFlavor) {
+          newFlavorStock = { ...newFlavorStock, [topFlavor]: Math.max(0, (newFlavorStock[topFlavor] || 0) + delta) }
+        }
+      }
     }
-    await supabase.from('pods').update(payload).eq('id', id)
+
+    await supabase.from('pods').update({ stock_qty: newQty, flavor_stock: newFlavorStock }).eq('id', id)
     fetchPods()
   }
 
