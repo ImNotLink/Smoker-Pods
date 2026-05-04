@@ -4,8 +4,6 @@ import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import Cart from '@/components/Cart'
 
-const CITIES = ['Buriticupu', 'Imperatriz', 'Rondon do Pará']
-
 // ─── Icons ─────────────────────────────────────────────────────────────────────
 
 function CartIcon({ size = 18 }) {
@@ -32,7 +30,7 @@ function WAFloatIcon() {
 }
 
 // ─── City Selector Modal ──────────────────────────────────────────────────────
-function CityModal({ onSelect }) {
+function CityModal({ onSelect, cities }) {
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4"
       style={{ background: 'rgba(0,0,0,0.92)', backdropFilter: 'blur(12px)' }}>
@@ -46,7 +44,7 @@ function CityModal({ onSelect }) {
 
         {/* City buttons */}
         <div className="space-y-3">
-          {CITIES.map(city => (
+          {cities.map(city => (
             <button
               key={city}
               onClick={() => onSelect(city)}
@@ -328,11 +326,14 @@ export default function HomePage() {
   const [zoomImg, setZoomImg] = useState(null)
   const [zoomAlt, setZoomAlt] = useState('')
   const [selectedCity, setSelectedCity] = useState(null)
+  const [cities, setCities] = useState(['Buriticupu', 'Imperatriz', 'Rondon do Pará'])
 
   useEffect(() => {
-    // Recupera cidade salva
+    supabase.from('cities').select('name').eq('active', true).order('name').then(({ data }) => {
+      if (data && data.length > 0) setCities(data.map(c => c.name))
+    })
     const saved = localStorage.getItem('smokepods_city')
-    if (saved && CITIES.includes(saved)) setSelectedCity(saved)
+    if (saved) setSelectedCity(saved)
   }, [])
 
   useEffect(() => {
@@ -375,7 +376,7 @@ export default function HomePage() {
     return cityMatch && nameMatch && flavorMatch
   })
 
-  // Esgotados no final; dentro de cada grupo, menor preço primeiro
+  // Esgotados sempre no final; dentro do grupo disponível aplica sortBy
   filtered = [...filtered].sort((a, b) => {
     const stockOf = p => {
       const fs = p.flavor_stock || {}
@@ -388,7 +389,10 @@ export default function HomePage() {
     if (aOut !== bOut) return aOut ? 1 : -1
 
     const priceOf = p => (p.on_sale && p.promo_price) ? p.promo_price : p.price
-    return priceOf(a) - priceOf(b)
+    if (sortBy === 'price_desc') return priceOf(b) - priceOf(a)
+    if (sortBy === 'newest')     return new Date(b.created_at) - new Date(a.created_at)
+    if (sortBy === 'promo')      return (b.on_sale ? 1 : 0) - (a.on_sale ? 1 : 0)
+    return priceOf(a) - priceOf(b) // price_asc (padrão)
   })
 
   const cartCount = cartItems.reduce((s, i) => s + i.qty, 0)
@@ -401,7 +405,7 @@ export default function HomePage() {
   ]
 
   // Mostra seletor de cidade se não selecionada
-  if (!selectedCity) return <CityModal onSelect={handleCitySelect} />
+  if (!selectedCity) return <CityModal onSelect={handleCitySelect} cities={cities} />
 
   return (
     <div className="min-h-screen" style={{ background: '#050505' }}>
@@ -497,14 +501,14 @@ export default function HomePage() {
       </section>
 
       {/* WhatsApp flutuante */}
-      <a href="https://wa.me/559991036173" target="_blank" rel="noopener noreferrer"
+      <a href={`https://wa.me/${process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '559991036173'}`} target="_blank" rel="noopener noreferrer"
         className="fixed bottom-6 right-6 z-40 flex items-center justify-center rounded-full transition-all hover:scale-110 active:scale-95"
         style={{ width: '58px', height: '58px', background: 'linear-gradient(135deg, #22c55e, #16a34a)', boxShadow: '0 4px 24px rgba(34,197,94,0.45)' }}
         title="Fale conosco no WhatsApp">
         <WAFloatIcon />
       </a>
 
-      <Cart open={cartOpen} onClose={() => setCartOpen(false)} items={cartItems} setItems={setCartItems} />
+      <Cart open={cartOpen} onClose={() => setCartOpen(false)} items={cartItems} setItems={setCartItems} city={selectedCity} />
       <ImageZoomModal src={zoomImg} alt={zoomAlt} onClose={() => setZoomImg(null)} />
     </div>
   )

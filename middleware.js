@@ -1,5 +1,15 @@
-// middleware.js — desativado intencionalmente
-// A proteção do /admin é feita diretamente no app/admin/page.js
-// via supabase.auth.getSession() no lado do cliente.
-export function middleware() {}
-export const config = { matcher: [] }
+import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs'
+import { NextResponse } from 'next/server'
+
+export async function middleware(req) {
+  const res = NextResponse.next()
+  const supabase = createMiddlewareClient({ req, res })
+  const { data: { session } } = await supabase.auth.getSession()
+
+  if (!session) {
+    return NextResponse.redirect(new URL('/login', req.url))
+  }
+  return res
+}
+
+export const config = { matcher: ['/admin/:path*'] }

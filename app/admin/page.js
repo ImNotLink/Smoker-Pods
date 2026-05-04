@@ -16,7 +16,7 @@ const I = {
 }
 
 // ─── Constants ──────────────────────────────────────────────────────────────────
-const CITIES = ['Buriticupu', 'Imperatriz', 'Rondon do Pará']
+const CITIES_FALLBACK = ['Buriticupu', 'Imperatriz', 'Rondon do Pará']
 const EMPTY = { name: '', price: '', promo_price: '', on_sale: false, stock_qty: '0', image_url: '', flavors: [], flavor_stock: {}, cities: [] }
 
 // ─── UI helpers ────────────────────────────────────────────────────────────────
@@ -322,6 +322,7 @@ export default function AdminPage() {
   const router = useRouter()
   const [pods, setPods] = useState([])
   const [orders, setOrders] = useState([])
+  const [cities, setCities] = useState(CITIES_FALLBACK)
   const [loading, setLoading] = useState(true)
   const [ordersLoading, setOrdersLoading] = useState(false)
   const [authChecked, setAuthChecked] = useState(false)
@@ -340,6 +341,7 @@ export default function AdminPage() {
       } else {
         setAuthChecked(true)
         fetchPods()
+        fetchCities()
       }
     })
   }, [])
@@ -357,6 +359,11 @@ export default function AdminPage() {
     const { data } = await supabase.from('pods').select('*').order('created_at', { ascending: false })
     setPods(data || [])
     setLoading(false)
+  }
+
+  async function fetchCities() {
+    const { data } = await supabase.from('cities').select('name').eq('active', true).order('name')
+    if (data && data.length > 0) setCities(data.map(c => c.name))
   }
 
   async function fetchOrders() {
@@ -440,8 +447,9 @@ export default function AdminPage() {
     p.name.toLowerCase().includes(search.toLowerCase())
   )
 
-  // Filter orders by matching their items to products available in the active city
+  // Pedidos com city salva: filtra direto; pedidos antigos (sem city): usa lógica de produtos
   const cityOrders = orders.filter(order => {
+    if (order.city) return order.city === activeCity
     const items = order.items || []
     if (items.length === 0) return true
     return items.some(item => {
@@ -457,6 +465,15 @@ export default function AdminPage() {
     { label: 'Promoções',  val: cityPods.filter(p => p.on_sale).length,             color: '#f59e0b' },
     { label: 'Esgotados',  val: cityPods.filter(p => p.stock_qty === 0).length,     color: '#ef4444' },
   ]
+
+  const lowStockAlerts = cityPods
+    .flatMap(pod => {
+      if (!pod.flavor_stock || Object.keys(pod.flavor_stock).length === 0) return []
+      return Object.entries(pod.flavor_stock)
+        .filter(([, qty]) => qty <= 3)
+        .map(([flavor, qty]) => ({ productName: pod.name, flavor, qty }))
+    })
+    .sort((a, b) => a.qty - b.qty)
 
   function switchCity(city) {
     setActiveCity(city)
@@ -527,7 +544,7 @@ export default function AdminPage() {
 
         {/* Row 2: city tabs */}
         <div className="flex gap-1.5 px-4 pb-2.5 overflow-x-auto">
-          {CITIES.map(city => (
+          {cities.map(city => (
             <button key={city}
               onClick={() => switchCity(city)}
               className="px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all flex-shrink-0"
@@ -565,7 +582,7 @@ export default function AdminPage() {
         <div className="mb-2">
           <p className="text-white/20 text-[10px] font-bold uppercase tracking-[0.12em] px-2 mb-2">Cidade</p>
           <div className="space-y-0.5">
-            {CITIES.map(city => (
+            {cities.map(city => (
               <button
                 key={city}
                 onClick={() => switchCity(city)}
@@ -664,6 +681,54 @@ export default function AdminPage() {
                 </div>
               ))}
             </div>
+
+            {/* Alertas de estoque baixo */}
+            {lowStockAlerts.length > 0 && (
+              <div
+                className="mb-6 rounded-2xl overflow-hidden"
+                style={{ border: '1px solid rgba(251,146,60,0.2)', background: 'rgba(251,146,60,0.04)' }}
+              >
+                <div
+                  className="px-5 py-3 flex items-center gap-2"
+                  style={{ borderBottom: '1px solid rgba(251,146,60,0.12)' }}
+                >
+                  <span className="text-orange-400 text-sm font-bold">⚡ Alertas de Estoque</span>
+                  <span className="ml-auto text-orange-400/50 text-xs">
+                    {lowStockAlerts.length} sabor{lowStockAlerts.length !== 1 ? 'es' : ''} crítico{lowStockAlerts.length !== 1 ? 's' : ''}
+                  </span>
+                </div>
+                <div className="flex flex-wrap gap-2 px-5 py-3.5">
+                  {lowStockAlerts.slice(0, 10).map((alert, i) => (
+                    <div
+                      key={i}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium"
+                      style={{
+                        background: alert.qty === 0 ? 'rgba(239,68,68,0.1)' : 'rgba(251,146,60,0.1)',
+                        border: alert.qty === 0 ? '1px solid rgba(239,68,68,0.2)' : '1px solid rgba(251,146,60,0.2)',
+                        color: alert.qty === 0 ? '#f87171' : '#fcd34d',
+                      }}
+                    >
+                      <span className="font-semibold truncate max-w-[120px]">{alert.productName}</span>
+                      <span className="opacity-40">·</span>
+                      <span>{alert.flavor}</span>
+                      <span
+                        className="ml-1 font-black px-1.5 py-0.5 rounded-md text-[10px]"
+                        style={{
+                          background: alert.qty === 0 ? 'rgba(239,68,68,0.2)' : 'rgba(251,146,60,0.2)',
+                        }}
+                      >
+                        {alert.qty === 0 ? 'ESGOTADO' : `${alert.qty}un`}
+                      </span>
+                    </div>
+                  ))}
+                  {lowStockAlerts.length > 10 && (
+                    <span className="flex items-center px-3 py-1.5 text-xs text-orange-400/40">
+                      e mais {lowStockAlerts.length - 10}...
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* Search */}
             <input

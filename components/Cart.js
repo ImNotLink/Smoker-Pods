@@ -3,8 +3,7 @@
 import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
 
-// ⚠️  SUBSTITUA pelo número real com DDI+DDD (sem espaços ou hífen)
-const WHATSAPP_NUMBER = '559991036173'
+const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '559991036173'
 
 const PAYMENT_OPTIONS = ['PIX', 'Dinheiro', 'Cartão de Crédito', 'Cartão de Débito']
 const HOW_FOUND_OPTIONS = ['Instagram', 'Indicação de amigo', 'Google', 'TikTok', 'Facebook', 'Outro']
@@ -31,7 +30,7 @@ function WAIcon() {
   )
 }
 
-export default function Cart({ open, onClose, items, setItems, availableFlavors = [] }) {
+export default function Cart({ open, onClose, items, setItems, availableFlavors = [], city = 'Buriticupu' }) {
   const [payment, setPayment] = useState('')
   const [howFound, setHowFound] = useState('')
   const [formError, setFormError] = useState('')
@@ -64,6 +63,7 @@ export default function Cart({ open, onClose, items, setItems, availableFlavors 
       total,
       payment,
       how_found: howFound,
+      city,
     })
 
     const lines = [
