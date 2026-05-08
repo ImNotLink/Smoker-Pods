@@ -344,6 +344,10 @@ export default function AdminPage() {
   const [activeCity, setActiveCity] = useState('Buriticupu')
   const [activeTab, setActiveTab] = useState('products')
   const [adminUser, setAdminUser] = useState(null)
+  const [userRole, setUserRole] = useState(null)
+  const [adminUsersList, setAdminUsersList] = useState([])
+  const [newAdminEmail, setNewAdminEmail] = useState('')
+  const [teamLoading, setTeamLoading] = useState(false)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -354,6 +358,12 @@ export default function AdminPage() {
         setAdminUser(session.user)
         fetchPods()
         fetchCities()
+        supabase
+          .from('admin_users')
+          .select('role')
+          .eq('email', session.user.email)
+          .single()
+          .then(({ data }) => setUserRole(data?.role ?? null))
       }
     })
   }, [])
@@ -496,9 +506,32 @@ export default function AdminPage() {
     setSearch('')
   }
 
+  async function fetchAdminUsers() {
+    setTeamLoading(true)
+    const { data } = await supabase.from('admin_users').select('*').order('created_at')
+    setAdminUsersList(data || [])
+    setTeamLoading(false)
+  }
+
+  async function addAdmin(e) {
+    e.preventDefault()
+    const email = newAdminEmail.trim().toLowerCase()
+    if (!email) return
+    const { error } = await supabase.from('admin_users').insert({ email })
+    if (error) alert('Erro ao adicionar: ' + error.message)
+    else { setNewAdminEmail(''); fetchAdminUsers() }
+  }
+
+  async function removeAdmin(email) {
+    const { error } = await supabase.from('admin_users').delete().eq('email', email)
+    if (error) alert('Erro ao remover: ' + error.message)
+    else fetchAdminUsers()
+  }
+
   function switchTab(tab) {
     setActiveTab(tab)
     if (tab === 'orders' || tab === 'sales') fetchOrders()
+    if (tab === 'team') fetchAdminUsers()
   }
 
   if (!authChecked) {
@@ -540,6 +573,7 @@ export default function AdminPage() {
               { id: 'products', label: '📦' },
               { id: 'orders',   label: '📋' },
               { id: 'sales',    label: '📊' },
+              ...(userRole === 'super_admin' ? [{ id: 'team', label: '👥' }] : []),
             ].map(tab => (
               <button key={tab.id}
                 onClick={() => switchTab(tab.id)}
@@ -633,6 +667,7 @@ export default function AdminPage() {
               { id: 'products', label: '📦 Produtos' },
               { id: 'orders',   label: '📋 Pedidos' },
               { id: 'sales',    label: '📊 Vendas' },
+              ...(userRole === 'super_admin' ? [{ id: 'team', label: '👥 Equipe' }] : []),
             ].map(tab => (
               <button
                 key={tab.id}
@@ -1097,6 +1132,83 @@ export default function AdminPage() {
                 </div>
               )
             })()}
+          </div>
+        )}
+
+        {/* ════ EQUIPE TAB ════ */}
+        {activeTab === 'team' && userRole === 'super_admin' && (
+          <div>
+            <div className="mb-8">
+              <p className="text-white/30 text-xs font-semibold uppercase tracking-widest mb-1">Super Admin</p>
+              <h1 className="text-white text-2xl font-black tracking-tight">Equipe</h1>
+              <p className="text-white/30 text-sm mt-0.5">Gerencie os vendedores autorizados</p>
+            </div>
+
+            {/* Add admin form */}
+            <form onSubmit={addAdmin} className="flex gap-3 mb-8">
+              <input
+                type="email"
+                required
+                value={newAdminEmail}
+                onChange={e => setNewAdminEmail(e.target.value)}
+                placeholder="email@exemplo.com"
+                className="flex-1 px-4 py-2.5 rounded-xl text-white text-sm outline-none border border-white/[0.08] focus:border-blue-500/50 placeholder-white/20 transition-colors"
+                style={{ background: 'rgba(255,255,255,0.05)' }}
+              />
+              <button
+                type="submit"
+                className="px-5 py-2.5 rounded-xl font-bold text-white text-sm transition-all hover:brightness-110 active:scale-[0.97] flex items-center gap-2"
+                style={{ background: 'linear-gradient(135deg, #1d4ed8, #3b82f6)', boxShadow: '0 0 20px rgba(59,130,246,0.3)' }}
+              >
+                <I.Plus /> Adicionar
+              </button>
+            </form>
+
+            {/* Admin list */}
+            {teamLoading ? (
+              <div className="flex justify-center py-16">
+                <div className="w-7 h-7 rounded-full border-2 border-t-transparent animate-spin"
+                  style={{ borderColor: 'rgba(59,130,246,0.3)', borderTopColor: '#3b82f6' }} />
+              </div>
+            ) : adminUsersList.length === 0 ? (
+              <p className="text-white/20 text-sm text-center py-16">Nenhum vendedor cadastrado ainda.</p>
+            ) : (
+              <div className="space-y-2">
+                {adminUsersList.map(u => (
+                  <div key={u.email}
+                    className="flex items-center gap-4 px-5 py-4 rounded-2xl"
+                    style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
+                  >
+                    <div className="w-9 h-9 rounded-xl flex-shrink-0 flex items-center justify-center text-sm font-black text-blue-300"
+                      style={{ background: 'rgba(59,130,246,0.12)' }}>
+                      {adminDisplayName(u.email).charAt(0)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-white font-semibold text-sm truncate">{adminDisplayName(u.email)}</p>
+                      <p className="text-white/35 text-xs truncate">{u.email}</p>
+                    </div>
+                    <span
+                      className="px-2.5 py-1 rounded-lg text-xs font-bold flex-shrink-0"
+                      style={u.role === 'super_admin'
+                        ? { background: 'rgba(245,158,11,0.15)', color: '#fbbf24', border: '1px solid rgba(245,158,11,0.25)' }
+                        : { background: 'rgba(59,130,246,0.1)', color: '#93c5fd', border: '1px solid rgba(59,130,246,0.2)' }}
+                    >
+                      {u.role === 'super_admin' ? 'Super Admin' : 'Vendedor'}
+                    </span>
+                    {u.email !== adminUser?.email && u.role !== 'super_admin' && (
+                      <button
+                        onClick={() => removeAdmin(u.email)}
+                        className="w-8 h-8 rounded-xl flex items-center justify-center text-white/20 hover:text-red-400 transition-colors flex-shrink-0"
+                        style={{ border: '1px solid rgba(255,255,255,0.07)' }}
+                        title="Remover acesso"
+                      >
+                        <I.Trash />
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </main>

@@ -270,6 +270,54 @@ CREATE TRIGGER on_new_order
   EXECUTE FUNCTION public.handle_new_order();
 
 -- =============================================================================
+-- 10. TABELA: admin_users (controle de acesso e super admin)
+-- =============================================================================
+CREATE TABLE IF NOT EXISTS public.admin_users (
+  email      TEXT        PRIMARY KEY,
+  role       TEXT        NOT NULL DEFAULT 'admin' CHECK (role IN ('admin', 'super_admin')),
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE public.admin_users ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "admin_users_auth_select"          ON public.admin_users;
+DROP POLICY IF EXISTS "admin_users_super_admin_insert"   ON public.admin_users;
+DROP POLICY IF EXISTS "admin_users_super_admin_delete"   ON public.admin_users;
+
+-- Qualquer admin autenticado pode ler (para checar o próprio role)
+CREATE POLICY "admin_users_auth_select"
+  ON public.admin_users FOR SELECT
+  TO authenticated
+  USING (true);
+
+-- Apenas super_admin pode adicionar novos vendedores
+CREATE POLICY "admin_users_super_admin_insert"
+  ON public.admin_users FOR INSERT
+  TO authenticated
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM public.admin_users au
+      WHERE au.email = auth.email() AND au.role = 'super_admin'
+    )
+  );
+
+-- Super_admin pode remover vendedores (mas não a si mesmo nem outro super_admin)
+CREATE POLICY "admin_users_super_admin_delete"
+  ON public.admin_users FOR DELETE
+  TO authenticated
+  USING (
+    email <> auth.email()
+    AND role <> 'super_admin'
+    AND EXISTS (
+      SELECT 1 FROM public.admin_users au
+      WHERE au.email = auth.email() AND au.role = 'super_admin'
+    )
+  );
+
+-- !! IMPORTANTE: insira seu email como super_admin antes de usar a aba Equipe !!
+-- INSERT INTO public.admin_users (email, role) VALUES ('seu@email.com', 'super_admin');
+
+-- =============================================================================
 -- 8. ÍNDICES DE PERFORMANCE
 -- =============================================================================
 CREATE INDEX IF NOT EXISTS idx_pods_cities       ON public.pods   USING GIN (cities);
