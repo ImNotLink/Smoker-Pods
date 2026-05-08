@@ -349,6 +349,7 @@ export default function AdminPage() {
   const [newAdminEmail, setNewAdminEmail] = useState('')
   const [teamLoading, setTeamLoading] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [copiedId, setCopiedId] = useState(null)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -560,6 +561,29 @@ export default function AdminPage() {
     await navigator.clipboard.writeText(text)
     setCopied(true)
     setTimeout(() => setCopied(false), 2500)
+  }
+
+  function buildSingleOrderText(order, index) {
+    const products = (order.items || []).map(item =>
+      `${item.name} (${item.flavor}) ×${item.qty}`
+    ).join(', ')
+    const total = `R$ ${Number(order.total).toFixed(2).replace('.', ',')}`
+    return [
+      `*${index + 1}º Pedido*`,
+      `📦 Produto: ${products || '—'}`,
+      `👤 Cliente: ${order.customer_name || '—'}`,
+      `📍 Cidade: ${order.city || activeCity}`,
+      `💳 Pagamento: ${order.payment} - ${total}`,
+      `📊 Status: ⬜ Pendente / ✅ Pago`,
+      `🚚 Entrega: ⬜ A enviar / 🚚 Enviado / 📦 Entregue`,
+    ].join('\n')
+  }
+
+  async function copySingleOrder(order, index) {
+    const text = buildSingleOrderText(order, index)
+    await navigator.clipboard.writeText(text)
+    setCopiedId(order.id)
+    setTimeout(() => setCopiedId(null), 2500)
   }
 
   if (!authChecked) {
@@ -1216,9 +1240,22 @@ export default function AdminPage() {
                       className="rounded-2xl p-5 font-mono text-sm"
                       style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}
                     >
-                      <p className="text-blue-400 font-bold mb-3 font-sans text-xs uppercase tracking-widest">
-                        {i + 1}º Pedido
-                      </p>
+                      <div className="flex items-center justify-between mb-3">
+                        <p className="text-blue-400 font-bold font-sans text-xs uppercase tracking-widest">
+                          {i + 1}º Pedido
+                        </p>
+                        <button
+                          onClick={() => copySingleOrder(order, i)}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all hover:brightness-110 active:scale-[0.97]"
+                          style={{
+                            background: copiedId === order.id ? 'rgba(34,197,94,0.15)' : 'rgba(59,130,246,0.1)',
+                            border: copiedId === order.id ? '1px solid rgba(34,197,94,0.35)' : '1px solid rgba(59,130,246,0.25)',
+                            color: copiedId === order.id ? '#4ade80' : '#93c5fd',
+                          }}
+                        >
+                          {copiedId === order.id ? '✓ Copiado' : '📋 Copiar'}
+                        </button>
+                      </div>
                       <div className="space-y-1.5">
                         <p className="text-white/80">📦 <span className="text-white/40">Produto:</span> <span className="text-white">{products || '—'}</span></p>
                         <p className="text-white/80">👤 <span className="text-white/40">Cliente:</span> <span className="text-white">{order.customer_name || '—'}</span></p>
