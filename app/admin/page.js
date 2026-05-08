@@ -538,19 +538,19 @@ export default function AdminPage() {
 
   function buildDispatchText() {
     return cityOrders.map((order, i) => {
-      const ordinal = `${i + 1}º`
-      const products = (order.items || []).map(item =>
-        `${item.name} (${item.flavor}) ×${item.qty}`
-      ).join(', ')
+      const items = order.items || []
+      const produtos = items.map(item => `${item.name} ×${item.qty}`).join(', ') || '—'
+      const sabores = items.map(item => item.flavor).join(', ') || '—'
       const total = `R$ ${Number(order.total).toFixed(2).replace('.', ',')}`
       return [
-        `*${ordinal} Pedido*`,
-        `📦 Produto: ${products || '—'}`,
+        `*${i + 1}º Pedido*`,
+        `📦 Produto: ${produtos}`,
+        `🧃 Sabor: ${sabores}`,
         `👤 Cliente: ${order.customer_name || '—'}`,
         `📍 Cidade: ${order.city || activeCity}`,
         `💳 Pagamento: ${order.payment} - ${total}`,
-        `📊 Status: ⬜ Pendente / ✅ Pago`,
-        `🚚 Entrega: ⬜ A enviar / 🚚 Enviado / 📦 Entregue`,
+        `📊 Status: `,
+        `📆 Prazo: `,
       ].join('\n')
     }).join('\n\n')
   }
@@ -564,18 +564,19 @@ export default function AdminPage() {
   }
 
   function buildSingleOrderText(order, index) {
-    const products = (order.items || []).map(item =>
-      `${item.name} (${item.flavor}) ×${item.qty}`
-    ).join(', ')
+    const items = order.items || []
+    const produtos = items.map(item => `${item.name} ×${item.qty}`).join(', ') || '—'
+    const sabores = items.map(item => item.flavor).join(', ') || '—'
     const total = `R$ ${Number(order.total).toFixed(2).replace('.', ',')}`
     return [
       `*${index + 1}º Pedido*`,
-      `📦 Produto: ${products || '—'}`,
+      `📦 Produto: ${produtos}`,
+      `🧃 Sabor: ${sabores}`,
       `👤 Cliente: ${order.customer_name || '—'}`,
       `📍 Cidade: ${order.city || activeCity}`,
       `💳 Pagamento: ${order.payment} - ${total}`,
-      `📊 Status: ⬜ Pendente / ✅ Pago`,
-      `🚚 Entrega: ⬜ A enviar / 🚚 Enviado / 📦 Entregue`,
+      `📊 Status: `,
+      `📆 Prazo: `,
     ].join('\n')
   }
 
@@ -1230,9 +1231,9 @@ export default function AdminPage() {
             ) : (
               <div className="space-y-4">
                 {cityOrders.map((order, i) => {
-                  const products = (order.items || []).map(item =>
-                    `${item.name} (${item.flavor}) ×${item.qty}`
-                  ).join(', ')
+                  const items = order.items || []
+                  const produtos = items.map(item => `${item.name} ×${item.qty}`).join(', ') || '—'
+                  const sabores = items.map(item => item.flavor).join(', ') || '—'
                   const total = `R$ ${Number(order.total).toFixed(2).replace('.', ',')}`
                   return (
                     <div
@@ -1257,12 +1258,13 @@ export default function AdminPage() {
                         </button>
                       </div>
                       <div className="space-y-1.5">
-                        <p className="text-white/80">📦 <span className="text-white/40">Produto:</span> <span className="text-white">{products || '—'}</span></p>
-                        <p className="text-white/80">👤 <span className="text-white/40">Cliente:</span> <span className="text-white">{order.customer_name || '—'}</span></p>
-                        <p className="text-white/80">📍 <span className="text-white/40">Cidade:</span> <span className="text-white">{order.city || activeCity}</span></p>
-                        <p className="text-white/80">💳 <span className="text-white/40">Pagamento:</span> <span className="text-white">{order.payment} - {total}</span></p>
-                        <p className="text-white/80">📊 <span className="text-white/40">Status:</span> <span className="text-white/60">⬜ Pendente / ✅ Pago</span></p>
-                        <p className="text-white/80">🚚 <span className="text-white/40">Entrega:</span> <span className="text-white/60">⬜ A enviar / 🚚 Enviado / 📦 Entregue</span></p>
+                        <p>📦 <span className="text-white/40">Produto:</span> <span className="text-white">{produtos}</span></p>
+                        <p>🧃 <span className="text-white/40">Sabor:</span> <span className="text-white">{sabores}</span></p>
+                        <p>👤 <span className="text-white/40">Cliente:</span> <span className="text-white">{order.customer_name || '—'}</span></p>
+                        <p>📍 <span className="text-white/40">Cidade:</span> <span className="text-white">{order.city || activeCity}</span></p>
+                        <p>💳 <span className="text-white/40">Pagamento:</span> <span className="text-white">{order.payment} - {total}</span></p>
+                        <p>📊 <span className="text-white/40">Status:</span></p>
+                        <p>📆 <span className="text-white/40">Prazo:</span></p>
                       </div>
                     </div>
                   )
