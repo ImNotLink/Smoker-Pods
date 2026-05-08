@@ -348,6 +348,7 @@ export default function AdminPage() {
   const [adminUsersList, setAdminUsersList] = useState([])
   const [newAdminEmail, setNewAdminEmail] = useState('')
   const [teamLoading, setTeamLoading] = useState(false)
+  const [copied, setCopied] = useState(false)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -530,8 +531,35 @@ export default function AdminPage() {
 
   function switchTab(tab) {
     setActiveTab(tab)
-    if (tab === 'orders' || tab === 'sales') fetchOrders()
+    if (tab === 'orders' || tab === 'sales' || tab === 'dispatch') fetchOrders()
     if (tab === 'team') fetchAdminUsers()
+  }
+
+  function buildDispatchText() {
+    return cityOrders.map((order, i) => {
+      const ordinal = `${i + 1}º`
+      const products = (order.items || []).map(item =>
+        `${item.name} (${item.flavor}) ×${item.qty}`
+      ).join(', ')
+      const total = `R$ ${Number(order.total).toFixed(2).replace('.', ',')}`
+      return [
+        `*${ordinal} Pedido*`,
+        `📦 Produto: ${products || '—'}`,
+        `👤 Cliente: ${order.customer_name || '—'}`,
+        `📍 Cidade: ${order.city || activeCity}`,
+        `💳 Pagamento: ${order.payment} - ${total}`,
+        `📊 Status: ⬜ Pendente / ✅ Pago`,
+        `🚚 Entrega: ⬜ A enviar / 🚚 Enviado / 📦 Entregue`,
+      ].join('\n')
+    }).join('\n\n')
+  }
+
+  async function copyDispatch() {
+    const text = buildDispatchText()
+    if (!text) return
+    await navigator.clipboard.writeText(text)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2500)
   }
 
   if (!authChecked) {
@@ -573,6 +601,7 @@ export default function AdminPage() {
               { id: 'products', label: '📦' },
               { id: 'orders',   label: '📋' },
               { id: 'sales',    label: '📊' },
+              { id: 'dispatch', label: '📤' },
               ...(userRole === 'super_admin' ? [{ id: 'team', label: '👥' }] : []),
             ].map(tab => (
               <button key={tab.id}
@@ -667,6 +696,7 @@ export default function AdminPage() {
               { id: 'products', label: '📦 Produtos' },
               { id: 'orders',   label: '📋 Pedidos' },
               { id: 'sales',    label: '📊 Vendas' },
+              { id: 'dispatch', label: '📤 Enviar' },
               ...(userRole === 'super_admin' ? [{ id: 'team', label: '👥 Equipe' }] : []),
             ].map(tab => (
               <button
@@ -1132,6 +1162,76 @@ export default function AdminPage() {
                 </div>
               )
             })()}
+          </div>
+        )}
+
+        {/* ════ ENVIAR TAB ════ */}
+        {activeTab === 'dispatch' && (
+          <div>
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <p className="text-white/30 text-xs font-semibold uppercase tracking-widest mb-1">📍 {activeCity}</p>
+                <h1 className="text-white text-2xl font-black tracking-tight">Enviar na Administração</h1>
+                <p className="text-white/30 text-sm mt-0.5">
+                  {cityOrders.length} pedido{cityOrders.length !== 1 ? 's' : ''} em {activeCity}
+                </p>
+              </div>
+              {cityOrders.length > 0 && (
+                <button
+                  onClick={copyDispatch}
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-white text-sm transition-all hover:brightness-110 active:scale-[0.97]"
+                  style={{
+                    background: copied
+                      ? 'linear-gradient(135deg, #15803d, #22c55e)'
+                      : 'linear-gradient(135deg, #1d4ed8, #3b82f6)',
+                    boxShadow: copied
+                      ? '0 0 20px rgba(34,197,94,0.3)'
+                      : '0 0 20px rgba(59,130,246,0.3)',
+                  }}
+                >
+                  {copied ? '✓ Copiado!' : '📋 Copiar Tabela'}
+                </button>
+              )}
+            </div>
+
+            {ordersLoading ? (
+              <div className="flex items-center justify-center h-40">
+                <div className="w-7 h-7 rounded-full border-2 border-t-transparent animate-spin"
+                  style={{ borderColor: 'rgba(59,130,246,0.3)', borderTopColor: '#3b82f6' }} />
+              </div>
+            ) : cityOrders.length === 0 ? (
+              <div className="text-center text-white/20 py-20 text-sm">
+                Nenhum pedido em {activeCity} ainda.
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {cityOrders.map((order, i) => {
+                  const products = (order.items || []).map(item =>
+                    `${item.name} (${item.flavor}) ×${item.qty}`
+                  ).join(', ')
+                  const total = `R$ ${Number(order.total).toFixed(2).replace('.', ',')}`
+                  return (
+                    <div
+                      key={order.id}
+                      className="rounded-2xl p-5 font-mono text-sm"
+                      style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}
+                    >
+                      <p className="text-blue-400 font-bold mb-3 font-sans text-xs uppercase tracking-widest">
+                        {i + 1}º Pedido
+                      </p>
+                      <div className="space-y-1.5">
+                        <p className="text-white/80">📦 <span className="text-white/40">Produto:</span> <span className="text-white">{products || '—'}</span></p>
+                        <p className="text-white/80">👤 <span className="text-white/40">Cliente:</span> <span className="text-white">{order.customer_name || '—'}</span></p>
+                        <p className="text-white/80">📍 <span className="text-white/40">Cidade:</span> <span className="text-white">{order.city || activeCity}</span></p>
+                        <p className="text-white/80">💳 <span className="text-white/40">Pagamento:</span> <span className="text-white">{order.payment} - {total}</span></p>
+                        <p className="text-white/80">📊 <span className="text-white/40">Status:</span> <span className="text-white/60">⬜ Pendente / ✅ Pago</span></p>
+                        <p className="text-white/80">🚚 <span className="text-white/40">Entrega:</span> <span className="text-white/60">⬜ A enviar / 🚚 Enviado / 📦 Entregue</span></p>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
           </div>
         )}
 

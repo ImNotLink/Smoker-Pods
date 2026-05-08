@@ -6,7 +6,10 @@
       "Bash(node -e ' *)",
       "PowerShell(Add-Type -AssemblyName System.Drawing; $img = [System.Drawing.Image]::FromFile\\(\"d:\\\\VsCode\\\\Smoke Pods\\\\Smoker Pods\\\\public\\\\Logo Nova sem fundo.png\"\\); \"$\\($img.Width\\) x $\\($img.Height\\)\"; $img.Dispose\\(\\))",
       "Bash(Get-ChildItem -Force)",
-      "Bash(Select-Object Name, Mode)"
+      "Bash(Select-Object Name, Mode)",
+      "Bash(Get-ChildItem -Path \"d:\\\\VsCode\\\\Smoke Pods\\\\Smoker Pods\" -Force)",
+      "Bash(Select-Object Name, PSIsContainer)",
+      "Bash(Format-Table -AutoSize)"
     ]
   }
 }
