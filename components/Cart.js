@@ -6,7 +6,7 @@ import { supabase } from '@/lib/supabase'
 const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '559991036173'
 
 const PAYMENT_OPTIONS = ['PIX', 'Dinheiro', 'Cartão de Crédito', 'Cartão de Débito']
-const HOW_FOUND_OPTIONS = ['Instagram', 'Indicação de amigo', 'Google', 'TikTok', 'Facebook', 'Outro']
+const HOW_FOUND_OPTIONS = ['Instagram', 'Indicação de amigo', 'Hora Extra', 'Bar do Leandro', 'Outros']
 
 function XIcon() {
   return (
