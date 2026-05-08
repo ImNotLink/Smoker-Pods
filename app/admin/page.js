@@ -317,6 +317,16 @@ function ProductForm({ initial, onSave, onCancel, saving }) {
   )
 }
 
+function adminDisplayName(email) {
+  if (!email) return 'Admin'
+  const local = email.split('@')[0]
+  return local
+    .replace(/[._-]/g, ' ')
+    .split(' ')
+    .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ')
+}
+
 // ─── Main Admin Page ────────────────────────────────────────────────────────────
 export default function AdminPage() {
   const router = useRouter()
@@ -333,6 +343,7 @@ export default function AdminPage() {
   const [search, setSearch] = useState('')
   const [activeCity, setActiveCity] = useState('Buriticupu')
   const [activeTab, setActiveTab] = useState('products')
+  const [adminUser, setAdminUser] = useState(null)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -340,6 +351,7 @@ export default function AdminPage() {
         window.location.replace('/login')
       } else {
         setAuthChecked(true)
+        setAdminUser(session.user)
         fetchPods()
         fetchCities()
       }
@@ -510,12 +522,19 @@ export default function AdminPage() {
 
         {/* Row 1: logo + section tabs + logout */}
         <div className="flex items-center justify-between px-4 py-2.5">
-          <img
-            src="/logo_trimmed.png"
-            alt="SmokePods"
-            className="h-8 w-auto object-contain"
-            style={{ filter: 'drop-shadow(0 0 6px rgba(59,130,246,0.5))' }}
-          />
+          <div className="flex items-center gap-2">
+            <img
+              src="/logo_trimmed.png"
+              alt="SmokePods"
+              className="h-8 w-auto object-contain"
+              style={{ filter: 'drop-shadow(0 0 6px rgba(59,130,246,0.5))' }}
+            />
+            {adminUser && (
+              <span className="text-white/40 text-xs font-semibold truncate max-w-[100px]">
+                {adminDisplayName(adminUser.email)}
+              </span>
+            )}
+          </div>
           <div className="flex items-center gap-1">
             {[
               { id: 'products', label: '📦' },
@@ -633,6 +652,19 @@ export default function AdminPage() {
 
         {/* Footer */}
         <div className="space-y-0.5">
+          {adminUser && (
+            <div className="flex items-center gap-2.5 px-3 py-2.5 mb-1 rounded-xl"
+              style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}>
+              <div className="w-7 h-7 rounded-lg flex-shrink-0 flex items-center justify-center text-xs font-black text-blue-300"
+                style={{ background: 'rgba(59,130,246,0.15)' }}>
+                {adminDisplayName(adminUser.email).charAt(0)}
+              </div>
+              <div className="min-w-0">
+                <p className="text-white/80 text-xs font-semibold truncate">{adminDisplayName(adminUser.email)}</p>
+                <p className="text-white/25 text-[10px] truncate">{adminUser.email}</p>
+              </div>
+            </div>
+          )}
           <a
             href="/"
             className="flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm text-white/30 hover:text-white/60 transition-colors"

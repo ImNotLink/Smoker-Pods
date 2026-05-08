@@ -4,7 +4,9 @@
       "Bash(npm run *)",
       "Bash(node screenshot.cjs)",
       "Bash(node -e ' *)",
-      "PowerShell(Add-Type -AssemblyName System.Drawing; $img = [System.Drawing.Image]::FromFile\\(\"d:\\\\VsCode\\\\Smoke Pods\\\\Smoker Pods\\\\public\\\\Logo Nova sem fundo.png\"\\); \"$\\($img.Width\\) x $\\($img.Height\\)\"; $img.Dispose\\(\\))"
+      "PowerShell(Add-Type -AssemblyName System.Drawing; $img = [System.Drawing.Image]::FromFile\\(\"d:\\\\VsCode\\\\Smoke Pods\\\\Smoker Pods\\\\public\\\\Logo Nova sem fundo.png\"\\); \"$\\($img.Width\\) x $\\($img.Height\\)\"; $img.Dispose\\(\\))",
+      "Bash(Get-ChildItem -Force)",
+      "Bash(Select-Object Name, Mode)"
     ]
   }
 }
