@@ -849,7 +849,7 @@ export default function AdminPage() {
                 <table className="w-full text-sm min-w-[600px]">
                   <thead>
                     <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.02)' }}>
-                      {['Data', 'Itens', 'Total', 'Pagamento', 'Como nos conheceu', ''].map(h => (
+                      {['Data', 'Cliente', 'Itens', 'Total', 'Pagamento', 'Como nos conheceu', ''].map(h => (
                         <th key={h} className="text-left px-5 py-3.5 text-white/25 text-xs font-semibold uppercase tracking-wider">{h}</th>
                       ))}
                     </tr>
@@ -861,6 +861,9 @@ export default function AdminPage() {
                         style={{ borderBottom: idx < cityOrders.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}>
                         <td className="px-5 py-4 text-white/50 text-xs whitespace-nowrap">
                           {new Date(order.created_at).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                        </td>
+                        <td className="px-5 py-4">
+                          <span className="text-white text-xs font-semibold">{order.customer_name || <span className="text-white/25">—</span>}</span>
                         </td>
                         <td className="px-5 py-4">
                           <div className="space-y-1">
@@ -974,6 +977,9 @@ export default function AdminPage() {
                               </div>
                               <div className="w-px h-8 flex-shrink-0" style={{ background: 'rgba(255,255,255,0.08)' }} />
                               <div className="flex-1 min-w-0">
+                                {order.customer_name && (
+                                  <p className="text-white font-semibold text-xs mb-0.5">{order.customer_name}</p>
+                                )}
                                 <p className="text-white/70 text-xs truncate">{itemsSummary}</p>
                                 <div className="flex items-center gap-2 mt-1">
                                   <span className="text-white/30 text-xs">{order.payment}</span>

@@ -31,6 +31,7 @@ function WAIcon() {
 }
 
 export default function Cart({ open, onClose, items, setItems, availableFlavors = [], city = 'Buriticupu' }) {
+  const [customerName, setCustomerName] = useState('')
   const [payment, setPayment] = useState('')
   const [howFound, setHowFound] = useState('')
   const [formError, setFormError] = useState('')
@@ -52,6 +53,7 @@ export default function Cart({ open, onClose, items, setItems, availableFlavors 
 
   async function checkout() {
     setFormError('')
+    if (!customerName.trim()) { setFormError('Informe seu nome.'); return }
     if (!payment) { setFormError('Selecione a forma de pagamento.'); return }
     if (!howFound) { setFormError('Informe como nos conheceu.'); return }
     if (items.length === 0) { setFormError('Seu carrinho está vazio.'); return }
@@ -67,6 +69,7 @@ export default function Cart({ open, onClose, items, setItems, availableFlavors 
       payment,
       how_found: howFound,
       city,
+      customer_name: customerName.trim(),
     })
 
     if (orderError) {
@@ -77,6 +80,8 @@ export default function Cart({ open, onClose, items, setItems, availableFlavors 
 
     const lines = [
       '🛒 *Novo Pedido — Smoke Pods*',
+      '',
+      `👤 *Cliente:* ${customerName.trim()}`,
       '',
       '*Itens:*',
       ...items.map((i, n) =>
@@ -208,6 +213,15 @@ export default function Cart({ open, onClose, items, setItems, availableFlavors 
               <span className="font-black text-xl" style={{ color: '#3b82f6' }}>
                 R$ {total.toFixed(2).replace('.', ',')}
               </span>
+            </div>
+            <div>
+              <label className="block text-white/35 text-xs font-semibold uppercase tracking-widest mb-1.5">Seu Nome *</label>
+              <input
+                value={customerName}
+                onChange={e => setCustomerName(e.target.value)}
+                placeholder="Ex: João Silva"
+                style={{ ...sel, background: 'rgba(255,255,255,0.05)' }}
+              />
             </div>
             <div>
               <label className="block text-white/35 text-xs font-semibold uppercase tracking-widest mb-1.5">Forma de Pagamento *</label>
