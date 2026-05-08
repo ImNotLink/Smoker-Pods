@@ -578,6 +578,7 @@ export default function AdminPage() {
       `💳 Pagamento: ${order.payment} - ${total}`,
       `📊 Status: `,
       `📆 Prazo: `,
+      `👤 Vendido Por: `,
     ].join('\n')
   }
 
