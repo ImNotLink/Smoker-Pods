@@ -388,6 +388,12 @@ export default function AdminPage() {
     return () => subscription.unsubscribe()
   }, [])
 
+  useEffect(() => {
+    if (userRole !== null && userRole !== 'super_admin' && ['orders', 'sales', 'reposicao', 'team'].includes(activeTab)) {
+      setActiveTab('products')
+    }
+  }, [userRole])
+
   async function fetchPods() {
     const { data } = await supabase.from('pods').select('*').order('created_at', { ascending: false })
     setPods(data || [])
@@ -591,7 +597,10 @@ export default function AdminPage() {
     else fetchAdminUsers()
   }
 
+  const superAdminTabs = ['orders', 'sales', 'reposicao', 'team']
+
   function switchTab(tab) {
+    if (superAdminTabs.includes(tab) && userRole !== 'super_admin') return
     setActiveTab(tab)
     if (tab === 'orders' || tab === 'sales' || tab === 'dispatch') fetchOrders()
     if (tab === 'team') fetchAdminUsers()
@@ -688,10 +697,10 @@ export default function AdminPage() {
           <div className="flex items-center gap-1">
             {[
               { id: 'products',   label: '📦' },
-              { id: 'orders',     label: '📋' },
-              { id: 'sales',      label: '📊' },
+              ...(userRole === 'super_admin' ? [{ id: 'orders', label: '📋' }] : []),
+              ...(userRole === 'super_admin' ? [{ id: 'sales', label: '📊' }] : []),
               { id: 'dispatch',   label: '📤' },
-              { id: 'reposicao',  label: '🔄' },
+              ...(userRole === 'super_admin' ? [{ id: 'reposicao', label: '🔄' }] : []),
               ...(userRole === 'super_admin' ? [{ id: 'team', label: '👥' }] : []),
             ].map(tab => (
               <button key={tab.id}
@@ -784,10 +793,10 @@ export default function AdminPage() {
           <div className="space-y-0.5">
             {[
               { id: 'products',  label: '📦 Produtos' },
-              { id: 'orders',    label: '📋 Pedidos' },
-              { id: 'sales',     label: '📊 Vendas' },
+              ...(userRole === 'super_admin' ? [{ id: 'orders', label: '📋 Pedidos' }] : []),
+              ...(userRole === 'super_admin' ? [{ id: 'sales', label: '📊 Vendas' }] : []),
               { id: 'dispatch',  label: '📤 Enviar' },
-              { id: 'reposicao', label: '🔄 Reposição' },
+              ...(userRole === 'super_admin' ? [{ id: 'reposicao', label: '🔄 Reposição' }] : []),
               ...(userRole === 'super_admin' ? [{ id: 'team', label: '👥 Equipe' }] : []),
             ].map(tab => (
               <button
