@@ -318,6 +318,39 @@ CREATE POLICY "admin_users_super_admin_delete"
 -- INSERT INTO public.admin_users (email, role) VALUES ('seu@email.com', 'super_admin');
 
 -- =============================================================================
+-- 11. TABELA: reposicao (Tabelas de reposição de estoque)
+-- =============================================================================
+CREATE TABLE IF NOT EXISTS public.reposicao (
+  id         UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  city       TEXT        NOT NULL DEFAULT 'Buriticupu',
+  content    TEXT        NOT NULL DEFAULT '',
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE public.reposicao ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "reposicao_auth_select" ON public.reposicao;
+DROP POLICY IF EXISTS "reposicao_auth_insert" ON public.reposicao;
+DROP POLICY IF EXISTS "reposicao_auth_update" ON public.reposicao;
+DROP POLICY IF EXISTS "reposicao_auth_delete" ON public.reposicao;
+
+CREATE POLICY "reposicao_auth_select"
+  ON public.reposicao FOR SELECT
+  TO authenticated USING (true);
+
+CREATE POLICY "reposicao_auth_insert"
+  ON public.reposicao FOR INSERT
+  TO authenticated WITH CHECK (true);
+
+CREATE POLICY "reposicao_auth_update"
+  ON public.reposicao FOR UPDATE
+  TO authenticated USING (true) WITH CHECK (true);
+
+CREATE POLICY "reposicao_auth_delete"
+  ON public.reposicao FOR DELETE
+  TO authenticated USING (true);
+
+-- =============================================================================
 -- 8. ÍNDICES DE PERFORMANCE
 -- =============================================================================
 CREATE INDEX IF NOT EXISTS idx_pods_cities       ON public.pods   USING GIN (cities);
@@ -325,8 +358,10 @@ CREATE INDEX IF NOT EXISTS idx_pods_on_sale      ON public.pods   (on_sale) WHER
 CREATE INDEX IF NOT EXISTS idx_pods_stock_qty    ON public.pods   (stock_qty);
 CREATE INDEX IF NOT EXISTS idx_pods_created_at   ON public.pods   (created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_orders_city       ON public.orders (city);
-CREATE INDEX IF NOT EXISTS idx_orders_created_at ON public.orders (created_at DESC);
-CREATE INDEX IF NOT EXISTS idx_cities_active     ON public.cities (active) WHERE active = true;
+CREATE INDEX IF NOT EXISTS idx_orders_created_at     ON public.orders    (created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_cities_active         ON public.cities    (active) WHERE active = true;
+CREATE INDEX IF NOT EXISTS idx_reposicao_city        ON public.reposicao (city);
+CREATE INDEX IF NOT EXISTS idx_reposicao_created_at  ON public.reposicao (created_at DESC);
 
 -- =============================================================================
 -- CHECKLIST DE SEGURANÇA PÓS-EXECUÇÃO

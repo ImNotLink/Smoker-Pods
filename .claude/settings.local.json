@@ -11,7 +11,9 @@
       "Bash(Select-Object Name, PSIsContainer)",
       "Bash(Format-Table -AutoSize)",
       "Bash(Get-ChildItem -Path \"d:\\\\VsCode\\\\Smoke Pods\\\\Smoker Pods\" -Recurse -Directory)",
-      "Bash(Select-Object -ExpandProperty FullName)"
+      "Bash(Select-Object -ExpandProperty FullName)",
+      "mcp__claude_ai_Supabase__list_projects",
+      "mcp__claude_ai_Supabase__apply_migration"
     ]
   }
 }

@@ -353,6 +353,12 @@ export default function AdminPage() {
   const [copiedId, setCopiedId] = useState(null)
   const [copyTarget, setCopyTarget] = useState(null)
   const [copyDestCity, setCopyDestCity] = useState('')
+  const [reposicoes, setReposicoes] = useState([])
+  const [activeReposicao, setActiveReposicao] = useState(null)
+  const [newReposicaoText, setNewReposicaoText] = useState('')
+  const [showNewReposicao, setShowNewReposicao] = useState(false)
+  const [reposicaoLoading, setReposicaoLoading] = useState(false)
+  const [delReposicaoTarget, setDelReposicaoTarget] = useState(null)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -398,6 +404,32 @@ export default function AdminPage() {
     const { data } = await supabase.from('orders').select('*').order('created_at', { ascending: false }).limit(200)
     setOrders(data || [])
     setOrdersLoading(false)
+  }
+
+  async function fetchReposicoes() {
+    setReposicaoLoading(true)
+    const { data } = await supabase.from('reposicao').select('*').order('created_at', { ascending: false })
+    setReposicoes(data || [])
+    setReposicaoLoading(false)
+  }
+
+  async function handleCreateReposicao() {
+    const text = newReposicaoText.trim()
+    if (!text) return
+    const { error } = await supabase.from('reposicao').insert({ city: activeCity, content: text })
+    if (error) { alert('Erro ao salvar: ' + error.message); return }
+    setNewReposicaoText('')
+    setShowNewReposicao(false)
+    fetchReposicoes()
+  }
+
+  async function handleDeleteReposicao() {
+    if (!delReposicaoTarget) return
+    const { error } = await supabase.from('reposicao').delete().eq('id', delReposicaoTarget.id)
+    if (error) alert('Erro ao excluir: ' + error.message)
+    if (activeReposicao === delReposicaoTarget.id) setActiveReposicao(null)
+    setDelReposicaoTarget(null)
+    fetchReposicoes()
   }
 
   async function handleLogout() {
@@ -529,6 +561,9 @@ export default function AdminPage() {
     { label: 'Esgotados',  val: cityPods.filter(p => p.stock_qty === 0).length,     color: '#ef4444' },
   ]
 
+  const cityReposicoes = reposicoes.filter(r => r.city === activeCity)
+  const selectedReposicao = cityReposicoes.find(r => r.id === activeReposicao) ?? null
+
   function switchCity(city) {
     setActiveCity(city)
     setSearch('')
@@ -560,6 +595,7 @@ export default function AdminPage() {
     setActiveTab(tab)
     if (tab === 'orders' || tab === 'sales' || tab === 'dispatch') fetchOrders()
     if (tab === 'team') fetchAdminUsers()
+    if (tab === 'reposicao') { setActiveReposicao(null); setShowNewReposicao(false); fetchReposicoes() }
   }
 
   function buildDispatchText() {
@@ -651,10 +687,11 @@ export default function AdminPage() {
           </div>
           <div className="flex items-center gap-1">
             {[
-              { id: 'products', label: '📦' },
-              { id: 'orders',   label: '📋' },
-              { id: 'sales',    label: '📊' },
-              { id: 'dispatch', label: '📤' },
+              { id: 'products',   label: '📦' },
+              { id: 'orders',     label: '📋' },
+              { id: 'sales',      label: '📊' },
+              { id: 'dispatch',   label: '📤' },
+              { id: 'reposicao',  label: '🔄' },
               ...(userRole === 'super_admin' ? [{ id: 'team', label: '👥' }] : []),
             ].map(tab => (
               <button key={tab.id}
@@ -746,10 +783,11 @@ export default function AdminPage() {
           <p className="text-white/20 text-[10px] font-bold uppercase tracking-[0.12em] px-2 mb-2">Seção</p>
           <div className="space-y-0.5">
             {[
-              { id: 'products', label: '📦 Produtos' },
-              { id: 'orders',   label: '📋 Pedidos' },
-              { id: 'sales',    label: '📊 Vendas' },
-              { id: 'dispatch', label: '📤 Enviar' },
+              { id: 'products',  label: '📦 Produtos' },
+              { id: 'orders',    label: '📋 Pedidos' },
+              { id: 'sales',     label: '📊 Vendas' },
+              { id: 'dispatch',  label: '📤 Enviar' },
+              { id: 'reposicao', label: '🔄 Reposição' },
               ...(userRole === 'super_admin' ? [{ id: 'team', label: '👥 Equipe' }] : []),
             ].map(tab => (
               <button
@@ -1384,6 +1422,157 @@ export default function AdminPage() {
             )}
           </div>
         )}
+
+        {/* ════ REPOSIÇÃO TAB ════ */}
+        {activeTab === 'reposicao' && (
+          <div>
+            {/* Header */}
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                {activeReposicao === null ? (
+                  <>
+                    <p className="text-white/30 text-xs font-semibold uppercase tracking-widest mb-1">📍 {activeCity}</p>
+                    <h1 className="text-white text-2xl font-black tracking-tight">Reposição</h1>
+                    <p className="text-white/30 text-sm mt-0.5">{cityReposicoes.length} {cityReposicoes.length === 1 ? 'tabela' : 'tabelas'} registradas</p>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => { setActiveReposicao(null); setShowNewReposicao(false) }}
+                      className="flex items-center gap-1.5 text-white/40 hover:text-white/70 text-sm transition-colors mb-3"
+                    >
+                      ← Voltar
+                    </button>
+                    <h1 className="text-white text-2xl font-black tracking-tight">
+                      {selectedReposicao
+                        ? new Date(selectedReposicao.created_at).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+                        : '—'}
+                    </h1>
+                    <p className="text-white/30 text-sm mt-0.5">📍 {activeCity}</p>
+                  </>
+                )}
+              </div>
+              {activeReposicao === null && (
+                <button
+                  onClick={() => setShowNewReposicao(true)}
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-white text-sm transition-all hover:brightness-110 active:scale-[0.97]"
+                  style={{ background: 'linear-gradient(135deg, #1d4ed8, #3b82f6)', boxShadow: '0 0 20px rgba(59,130,246,0.3)' }}
+                >
+                  <I.Plus /> Nova Tabela
+                </button>
+              )}
+              {activeReposicao !== null && selectedReposicao && (
+                <button
+                  onClick={() => setDelReposicaoTarget(selectedReposicao)}
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-sm transition-all hover:brightness-110 active:scale-[0.97]"
+                  style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.25)', color: '#f87171' }}
+                >
+                  <I.Trash /> Excluir
+                </button>
+              )}
+            </div>
+
+            {/* ── Lista de tabelas ── */}
+            {activeReposicao === null && (
+              <>
+                {/* Formulário nova tabela */}
+                {showNewReposicao && (
+                  <div className="rounded-2xl p-6 mb-6" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(59,130,246,0.2)' }}>
+                    <p className="text-white/40 text-xs font-semibold uppercase tracking-widest mb-3">Nova Tabela — {activeCity}</p>
+                    <textarea
+                      autoFocus
+                      value={newReposicaoText}
+                      onChange={e => setNewReposicaoText(e.target.value)}
+                      placeholder="Cole ou digite o texto da reposição aqui..."
+                      rows={8}
+                      className="w-full px-4 py-3 rounded-xl text-white text-sm outline-none resize-none transition-colors border border-white/[0.08] focus:border-blue-500/50 placeholder-white/20 mb-4"
+                      style={{ background: 'rgba(255,255,255,0.05)', fontFamily: 'monospace' }}
+                    />
+                    <div className="flex gap-3">
+                      <button
+                        onClick={() => { setShowNewReposicao(false); setNewReposicaoText('') }}
+                        className="flex-1 py-2.5 rounded-xl text-sm text-white/40 border border-white/[0.08] hover:border-white/20 transition-colors"
+                      >
+                        Cancelar
+                      </button>
+                      <button
+                        onClick={handleCreateReposicao}
+                        disabled={!newReposicaoText.trim()}
+                        className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white transition-all hover:brightness-110 disabled:opacity-40 disabled:cursor-not-allowed"
+                        style={{ background: 'linear-gradient(135deg, #1d4ed8, #3b82f6)' }}
+                      >
+                        Salvar Tabela
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Loading */}
+                {reposicaoLoading ? (
+                  <div className="flex justify-center py-20">
+                    <div className="w-7 h-7 rounded-full border-2 border-t-transparent animate-spin"
+                      style={{ borderColor: 'rgba(59,130,246,0.3)', borderTopColor: '#3b82f6' }} />
+                  </div>
+                ) : cityReposicoes.length === 0 && !showNewReposicao ? (
+                  <div className="flex flex-col items-center justify-center py-24 gap-4">
+                    <p className="text-4xl">🔄</p>
+                    <p className="text-white/20 text-sm">Nenhuma tabela de reposição ainda.</p>
+                    <button
+                      onClick={() => setShowNewReposicao(true)}
+                      className="px-5 py-2.5 rounded-xl font-bold text-white text-sm transition-all hover:brightness-110"
+                      style={{ background: 'linear-gradient(135deg, #1d4ed8, #3b82f6)' }}
+                    >
+                      Criar primeira tabela
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {cityReposicoes.map(r => {
+                      const d = new Date(r.created_at)
+                      const datePart = d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })
+                      const timePart = d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+                      const preview = r.content.slice(0, 80).replace(/\n/g, ' ')
+                      return (
+                        <div key={r.id} className="flex items-center gap-3">
+                          <button
+                            onClick={() => setActiveReposicao(r.id)}
+                            className="flex-1 flex items-center justify-between px-5 py-4 rounded-2xl text-left transition-all hover:brightness-110 active:scale-[0.99]"
+                            style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}
+                          >
+                            <div className="flex items-center gap-4 min-w-0">
+                              <div className="flex-shrink-0 px-3 py-1.5 rounded-xl text-xs font-bold"
+                                style={{ background: 'rgba(59,130,246,0.12)', border: '1px solid rgba(59,130,246,0.2)', color: '#93c5fd' }}>
+                                📅 {datePart} — {timePart}
+                              </div>
+                              <p className="text-white/30 text-sm truncate hidden sm:block">{preview || '(sem conteúdo)'}</p>
+                            </div>
+                            <span className="text-white/20 text-xs flex-shrink-0 ml-2">→</span>
+                          </button>
+                          <button
+                            onClick={() => setDelReposicaoTarget(r)}
+                            className="w-10 h-10 flex-shrink-0 rounded-xl flex items-center justify-center transition-all hover:brightness-110"
+                            style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.15)', color: '#f87171' }}
+                          >
+                            <I.Trash />
+                          </button>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* ── Detalhe da tabela ── */}
+            {activeReposicao !== null && selectedReposicao && (
+              <div className="rounded-2xl p-6" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+                <pre className="text-white/80 text-sm whitespace-pre-wrap leading-relaxed" style={{ fontFamily: 'monospace' }}>
+                  {selectedReposicao.content}
+                </pre>
+              </div>
+            )}
+          </div>
+        )}
       </main>
 
       {/* ── Edit / Create Modal ─────────────────────────────────────── */}
@@ -1416,6 +1605,29 @@ export default function AdminPage() {
             Cancelar
           </button>
           <button onClick={handleDeleteOrder}
+            className="flex-1 py-3 rounded-xl text-sm font-bold text-white transition-all hover:brightness-110"
+            style={{ background: 'linear-gradient(135deg, #dc2626, #ef4444)' }}>
+            Excluir
+          </button>
+        </div>
+      </Modal>
+
+      {/* ── Delete reposição confirm ────────────────────────────────── */}
+      <Modal open={delReposicaoTarget !== null} onClose={() => setDelReposicaoTarget(null)} title="Excluir Tabela">
+        <p className="text-white/50 text-sm mb-6">
+          Excluir a tabela de{' '}
+          <span className="text-white font-semibold">
+            {delReposicaoTarget
+              ? new Date(delReposicaoTarget.created_at).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+              : '—'}
+          </span>? Esta ação é irreversível.
+        </p>
+        <div className="flex gap-3">
+          <button onClick={() => setDelReposicaoTarget(null)}
+            className="flex-1 py-3 rounded-xl text-sm text-white/40 border border-white/[0.08] hover:border-white/20 transition-colors">
+            Cancelar
+          </button>
+          <button onClick={handleDeleteReposicao}
             className="flex-1 py-3 rounded-xl text-sm font-bold text-white transition-all hover:brightness-110"
             style={{ background: 'linear-gradient(135deg, #dc2626, #ef4444)' }}>
             Excluir
