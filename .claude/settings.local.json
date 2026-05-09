@@ -9,7 +9,9 @@
       "Bash(Select-Object Name, Mode)",
       "Bash(Get-ChildItem -Path \"d:\\\\VsCode\\\\Smoke Pods\\\\Smoker Pods\" -Force)",
       "Bash(Select-Object Name, PSIsContainer)",
-      "Bash(Format-Table -AutoSize)"
+      "Bash(Format-Table -AutoSize)",
+      "Bash(Get-ChildItem -Path \"d:\\\\VsCode\\\\Smoke Pods\\\\Smoker Pods\" -Recurse -Directory)",
+      "Bash(Select-Object -ExpandProperty FullName)"
     ]
   }
 }
