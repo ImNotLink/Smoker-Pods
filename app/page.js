@@ -482,32 +482,20 @@ export default function HomePage() {
       </header>
 
       {/* Banner Timer de Promoção */}
-      {promoSchedule?.active && countdown && (
+      {promoSchedule?.active && countdown?.active && (
         <div style={{
-          background: countdown.active
-            ? 'linear-gradient(90deg, rgba(245,158,11,0.13), rgba(239,68,68,0.07))'
-            : 'rgba(255,255,255,0.02)',
-          borderBottom: countdown.active
-            ? '1px solid rgba(245,158,11,0.22)'
-            : '1px solid rgba(255,255,255,0.05)',
+          background: 'linear-gradient(90deg, rgba(245,158,11,0.13), rgba(239,68,68,0.07))',
+          borderBottom: '1px solid rgba(245,158,11,0.22)',
         }}>
           <div className="max-w-screen-xl mx-auto px-4 sm:px-6 py-2.5 flex items-center justify-center flex-wrap gap-2 sm:gap-3">
-            {countdown.active ? (
-              <>
-                <span className="text-amber-400 font-bold text-sm">🔥 PROMOÇÃO ATIVA</span>
-                <span className="text-white/20 hidden sm:inline">•</span>
-                <span className="text-white/40 text-xs">termina às {promoSchedule.end_time}</span>
-                <span className="text-white/20">•</span>
-                <span className="font-mono font-black text-lg text-amber-300 tracking-widest">
-                  {String(countdown.h).padStart(2, '0')}:{String(countdown.m).padStart(2, '0')}:{String(countdown.s).padStart(2, '0')}
-                </span>
-                <span className="text-white/30 text-xs">restantes</span>
-              </>
-            ) : (
-              <span className="text-white/20 text-xs py-0.5">
-                ⏸ Próxima promoção: {promoSchedule.start_time} – {promoSchedule.end_time}
-              </span>
-            )}
+            <span className="text-amber-400 font-bold text-sm">🔥 PROMOÇÃO ATIVA</span>
+            <span className="text-white/20 hidden sm:inline">•</span>
+            <span className="text-white/40 text-xs">termina às {promoSchedule.end_time}</span>
+            <span className="text-white/20">•</span>
+            <span className="font-mono font-black text-lg text-amber-300 tracking-widest">
+              {String(countdown.h).padStart(2, '0')}:{String(countdown.m).padStart(2, '0')}:{String(countdown.s).padStart(2, '0')}
+            </span>
+            <span className="text-white/30 text-xs">restantes</span>
           </div>
         </div>
       )}
