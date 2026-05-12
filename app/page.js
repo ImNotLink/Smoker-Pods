@@ -196,14 +196,50 @@ function FlavorModal({ pod, onConfirm, onClose }) {
   )
 }
 
+// ─── Toast ────────────────────────────────────────────────────────────────────
+function Toast({ toast }) {
+  if (!toast.visible) return null
+  const ok = toast.type === 'success'
+  return (
+    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[999] flex items-center gap-2.5 px-5 py-3 rounded-2xl text-sm font-semibold pointer-events-none"
+      style={{
+        background: ok ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)',
+        border: ok ? '1px solid rgba(34,197,94,0.3)' : '1px solid rgba(239,68,68,0.35)',
+        color: ok ? '#4ade80' : '#f87171',
+        backdropFilter: 'blur(16px)',
+        boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+        whiteSpace: 'nowrap',
+      }}>
+      {ok ? '✓' : '✕'} {toast.msg}
+    </div>
+  )
+}
+
+// ─── Product Skeleton ─────────────────────────────────────────────────────────
+function ProductSkeleton() {
+  return (
+    <div className="flex flex-col overflow-hidden rounded-[1.5rem] animate-pulse"
+      style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)' }}>
+      <div style={{ height: '260px', background: 'rgba(255,255,255,0.04)' }} />
+      <div className="p-5 space-y-3">
+        <div className="h-5 rounded-lg" style={{ background: 'rgba(255,255,255,0.06)', width: '65%' }} />
+        <div className="h-7 rounded-lg" style={{ background: 'rgba(255,255,255,0.05)', width: '38%' }} />
+        <div className="flex gap-1.5 mt-1">
+          {[1, 2, 3].map(i => <div key={i} className="h-5 w-14 rounded-full" style={{ background: 'rgba(255,255,255,0.04)' }} />)}
+        </div>
+        <div className="h-11 rounded-xl mt-2" style={{ background: 'rgba(255,255,255,0.04)' }} />
+      </div>
+    </div>
+  )
+}
+
 // ─── Product Card ─────────────────────────────────────────────────────────────
-function ProductCard({ pod, onAddToCart, onZoom }) {
+function ProductCard({ pod, onAddToCart, onZoom, onAddSuccess }) {
   const [showFlavorModal, setShowFlavorModal] = useState(false)
   const [added, setAdded] = useState(false)
 
   const flavorStock = pod.flavor_stock || {}
   const hasFlavorStock = Object.keys(flavorStock).length > 0
-  function getFlavorQty(f) { return hasFlavorStock ? (flavorStock[f] ?? 0) : pod.stock_qty }
 
   const totalStock = hasFlavorStock
     ? Object.values(flavorStock).reduce((a, b) => a + b, 0)
@@ -212,9 +248,6 @@ function ProductCard({ pod, onAddToCart, onZoom }) {
   const isGlobalOut = totalStock === 0
   const price = pod.on_sale && pod.promo_price ? pod.promo_price : pod.price
 
-  // Sabores disponíveis (estoque > 0)
-  const availableFlavors = pod.flavors.filter(f => getFlavorQty(f) > 0)
-
   function handleAddClick() {
     if (isGlobalOut) return
     setShowFlavorModal(true)
@@ -222,6 +255,7 @@ function ProductCard({ pod, onAddToCart, onZoom }) {
 
   function handleConfirm({ selectedFlavor, qty, unitPrice }) {
     onAddToCart({ ...pod, selectedFlavor, qty, unitPrice })
+    onAddSuccess?.(pod.name)
     setAdded(true)
     setTimeout(() => setAdded(false), 1800)
   }
@@ -248,10 +282,10 @@ function ProductCard({ pod, onAddToCart, onZoom }) {
             <div className="absolute top-3 right-3 z-10 px-2.5 py-1 rounded-full text-xs font-bold text-red-400"
               style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.25)' }}>Esgotado</div>
           )}
-          {!isGlobalOut && availableFlavors.length > 0 && availableFlavors.every(f => getFlavorQty(f) <= 3) && (
+          {!isGlobalOut && totalStock > 0 && totalStock <= 5 && (
             <div className="absolute top-3 right-3 z-10 px-2.5 py-1 rounded-full text-xs font-bold text-orange-300"
               style={{ background: 'rgba(251,146,60,0.15)', border: '1px solid rgba(251,146,60,0.3)' }}>
-              ⚡ Últimas unidades
+              ⚡ Últimas {totalStock}
             </div>
           )}
           {pod.image_url && (
@@ -329,6 +363,11 @@ export default function HomePage() {
   const [cities, setCities] = useState(['Buriticupu', 'Imperatriz', 'Rondon do Pará'])
   const [promoSchedule, setPromoSchedule] = useState(null)
   const [countdown, setCountdown] = useState(null)
+  const [toast, setToast] = useState({ visible: false, msg: '', type: 'success' })
+  function showToast(msg, type = 'success') {
+    setToast({ visible: true, msg, type })
+    setTimeout(() => setToast(p => ({ ...p, visible: false })), 3000)
+  }
 
   useEffect(() => {
     supabase.from('cities').select('name').eq('active', true).order('name').then(({ data }) => {
@@ -407,7 +446,6 @@ export default function HomePage() {
       if (exists) return prev.map(i => i.cartKey === key ? { ...i, qty: i.qty + item.qty } : i)
       return [...prev, { ...item, cartKey: key }]
     })
-    setCartOpen(true)
   }, [])
 
   // Promoções visíveis: sempre (sem schedule) ou dentro do horário agendado
@@ -605,9 +643,8 @@ export default function HomePage() {
       {/* Grid */}
       <section className="px-4 sm:px-6 pb-28 max-w-screen-xl mx-auto">
         {loading ? (
-          <div className="flex items-center justify-center h-64">
-            <div className="w-8 h-8 rounded-full border-2 border-t-transparent animate-spin"
-              style={{ borderColor: 'rgba(59,130,246,0.4)', borderTopColor: '#3b82f6' }} />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5 pt-2">
+            {Array.from({ length: 8 }, (_, i) => <ProductSkeleton key={i} />)}
           </div>
         ) : filtered.length === 0 ? (
           <div className="text-center text-white/20 py-20 text-sm">
@@ -617,6 +654,7 @@ export default function HomePage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5">
             {filtered.map(pod => (
               <ProductCard key={pod.id} pod={pod} onAddToCart={addToCart}
+                onAddSuccess={(name) => showToast(`${name} adicionado ao carrinho ✓`)}
                 onZoom={(src, alt) => { setZoomImg(src); setZoomAlt(alt) }} />
             ))}
           </div>
@@ -633,6 +671,7 @@ export default function HomePage() {
 
       <Cart open={cartOpen} onClose={() => setCartOpen(false)} items={cartItems} setItems={setCartItems} city={selectedCity} />
       <ImageZoomModal src={zoomImg} alt={zoomAlt} onClose={() => setZoomImg(null)} />
+      <Toast toast={toast} />
     </div>
   )
 }

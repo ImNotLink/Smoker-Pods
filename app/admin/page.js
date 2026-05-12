@@ -25,6 +25,25 @@ const inputCls = 'w-full px-4 py-2.5 rounded-xl text-white text-sm outline-none 
 const inputStyle = { background: 'rgba(255,255,255,0.05)' }
 const labelCls = 'block text-white/35 text-xs font-semibold uppercase tracking-widest mb-1.5'
 
+// ─── Toast ─────────────────────────────────────────────────────────────────────
+function Toast({ toast }) {
+  if (!toast.visible) return null
+  const ok = toast.type === 'success'
+  return (
+    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[999] flex items-center gap-2.5 px-5 py-3 rounded-2xl text-sm font-semibold pointer-events-none"
+      style={{
+        background: ok ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)',
+        border: ok ? '1px solid rgba(34,197,94,0.3)' : '1px solid rgba(239,68,68,0.35)',
+        color: ok ? '#4ade80' : '#f87171',
+        backdropFilter: 'blur(16px)',
+        boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+        whiteSpace: 'nowrap',
+      }}>
+      {ok ? '✓' : '✕'} {toast.msg}
+    </div>
+  )
+}
+
 // ─── Modal ─────────────────────────────────────────────────────────────────────
 function Modal({ open, onClose, title, children }) {
   if (!open) return null
@@ -59,7 +78,7 @@ function Modal({ open, onClose, title, children }) {
 }
 
 // ─── Product Form ──────────────────────────────────────────────────────────────
-function ProductForm({ initial, onSave, onCancel, saving }) {
+function ProductForm({ initial, onSave, onCancel, saving, onError }) {
   const [f, setF] = useState(() => ({
     ...EMPTY,
     ...(initial || {}),
@@ -113,7 +132,7 @@ function ProductForm({ initial, onSave, onCancel, saving }) {
 
     if (imgFile) {
       try { imageUrl = await uploadProductImage(imgFile) }
-      catch (err) { alert('Erro no upload: ' + err.message); setUploading(false); return }
+      catch (err) { onError?.('Erro no upload: ' + err.message); setUploading(false); return }
     }
 
     onSave({ ...f, image_url: imageUrl, stock_qty: totalStock })
@@ -364,6 +383,11 @@ export default function AdminPage() {
   const [bulkPromoSaving, setBulkPromoSaving] = useState(false)
   const [promoSchedule, setPromoSchedule] = useState({ start_time: '12:00', end_time: '16:00', active: false, id: null })
   const [scheduleSaving, setScheduleSaving] = useState(false)
+  const [toast, setToast] = useState({ visible: false, msg: '', type: 'success' })
+  function showToast(msg, type = 'success') {
+    setToast({ visible: true, msg, type })
+    setTimeout(() => setToast(p => ({ ...p, visible: false })), 3500)
+  }
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -428,15 +452,16 @@ export default function AdminPage() {
         end_time: promoSchedule.end_time,
         active: promoSchedule.active,
       }).eq('id', promoSchedule.id)
-      if (error) alert('Erro ao salvar timer: ' + error.message)
+      if (error) showToast('Erro ao salvar timer: ' + error.message, 'error')
+      else showToast('Timer salvo!')
     } else {
       const { data, error } = await supabase.from('promo_schedule').insert({
         start_time: promoSchedule.start_time,
         end_time: promoSchedule.end_time,
         active: promoSchedule.active,
       }).select().single()
-      if (error) alert('Erro ao salvar timer: ' + error.message)
-      else if (data) setPromoSchedule({ ...data, start_time: data.start_time?.slice(0, 5), end_time: data.end_time?.slice(0, 5) })
+      if (error) showToast('Erro ao salvar timer: ' + error.message, 'error')
+      else if (data) { setPromoSchedule({ ...data, start_time: data.start_time?.slice(0, 5), end_time: data.end_time?.slice(0, 5) }); showToast('Timer salvo!') }
     }
     setScheduleSaving(false)
   }
@@ -459,7 +484,8 @@ export default function AdminPage() {
     const text = newReposicaoText.trim()
     if (!text) return
     const { error } = await supabase.from('reposicao').insert({ city: activeCity, content: text })
-    if (error) { alert('Erro ao salvar: ' + error.message); return }
+    if (error) { showToast('Erro ao salvar: ' + error.message, 'error'); return }
+    showToast('Nota salva!')
     setNewReposicaoText('')
     setShowNewReposicao(false)
     fetchReposicoes()
@@ -468,7 +494,7 @@ export default function AdminPage() {
   async function handleDeleteReposicao() {
     if (!delReposicaoTarget) return
     const { error } = await supabase.from('reposicao').delete().eq('id', delReposicaoTarget.id)
-    if (error) alert('Erro ao excluir: ' + error.message)
+    if (error) showToast('Erro ao excluir: ' + error.message, 'error')
     if (activeReposicao === delReposicaoTarget.id) setActiveReposicao(null)
     setDelReposicaoTarget(null)
     fetchReposicoes()
@@ -498,12 +524,13 @@ export default function AdminPage() {
 
     if (form.id) {
       const { error } = await supabase.from('pods').update(payload).eq('id', form.id)
-      if (error) { alert('Erro ao atualizar: ' + error.message); setSaving(false); return }
+      if (error) { showToast('Erro ao atualizar: ' + error.message, 'error'); setSaving(false); return }
     } else {
       const { error } = await supabase.from('pods').insert(payload)
-      if (error) { alert('Erro ao criar: ' + error.message); setSaving(false); return }
+      if (error) { showToast('Erro ao criar: ' + error.message, 'error'); setSaving(false); return }
     }
 
+    showToast('Produto salvo com sucesso!')
     setSaving(false)
     setEditTarget(null)
     fetchPods()
@@ -512,7 +539,7 @@ export default function AdminPage() {
   async function handleDeleteOrder() {
     if (!delOrderTarget) return
     const { error } = await supabase.from('orders').delete().eq('id', delOrderTarget.id)
-    if (error) alert('Erro ao excluir pedido: ' + error.message)
+    if (error) showToast('Erro ao excluir pedido: ' + error.message, 'error')
     setDelOrderTarget(null)
     fetchOrders()
   }
@@ -521,7 +548,7 @@ export default function AdminPage() {
     if (!delTarget) return
     await deleteProductImage(delTarget.image_url)
     const { error } = await supabase.from('pods').delete().eq('id', delTarget.id)
-    if (error) alert('Erro ao deletar: ' + error.message)
+    if (error) showToast('Erro ao deletar: ' + error.message, 'error')
     setDelTarget(null)
     fetchPods()
   }
@@ -542,7 +569,7 @@ export default function AdminPage() {
       cities: [copyDestCity],
     }
     const { error } = await supabase.from('pods').insert(payload)
-    if (error) { alert('Erro ao copiar: ' + error.message); setSaving(false); return }
+    if (error) { showToast('Erro ao copiar: ' + error.message, 'error'); setSaving(false); return }
     setSaving(false)
     setCopyTarget(null)
     setCopyDestCity('')
@@ -623,14 +650,14 @@ export default function AdminPage() {
     const email = newAdminEmail.trim().toLowerCase()
     if (!email) return
     const { error } = await supabase.from('admin_users').insert({ email })
-    if (error) alert('Erro ao adicionar: ' + error.message)
-    else { setNewAdminEmail(''); fetchAdminUsers() }
+    if (error) showToast('Erro ao adicionar: ' + error.message, 'error')
+    else { setNewAdminEmail(''); fetchAdminUsers(); showToast('Admin adicionado!') }
   }
 
   async function removeAdmin(email) {
     const { error } = await supabase.from('admin_users').delete().eq('email', email)
-    if (error) alert('Erro ao remover: ' + error.message)
-    else fetchAdminUsers()
+    if (error) showToast('Erro ao remover: ' + error.message, 'error')
+    else { fetchAdminUsers(); showToast('Admin removido!') }
   }
 
   async function bulkSetPromo(activate) {
@@ -638,11 +665,12 @@ export default function AdminPage() {
     setBulkPromoSaving(true)
     const ids = Array.from(selectedPodIds)
     const { error } = await supabase.from('pods').update({ on_sale: activate }).in('id', ids)
-    if (error) alert('Erro ao atualizar promoções: ' + error.message)
+    if (error) showToast('Erro ao atualizar promoções: ' + error.message, 'error')
     else {
       setPods(prev => prev.map(p => selectedPodIds.has(p.id) ? { ...p, on_sale: activate } : p))
       setSelectedPodIds(new Set())
       setPromoSelectMode(false)
+      showToast(activate ? 'Promoções ativadas!' : 'Promoções desativadas!')
     }
     setBulkPromoSaving(false)
   }
@@ -1808,6 +1836,7 @@ export default function AdminPage() {
             onSave={handleSave}
             onCancel={() => setEditTarget(null)}
             saving={saving}
+            onError={(msg) => showToast(msg, 'error')}
           />
         )}
       </Modal>
@@ -1921,6 +1950,8 @@ export default function AdminPage() {
           </div>
         )}
       </Modal>
+
+      <Toast toast={toast} />
     </div>
   )
 }
