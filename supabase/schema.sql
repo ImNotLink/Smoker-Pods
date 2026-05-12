@@ -351,6 +351,36 @@ CREATE POLICY "reposicao_auth_delete"
   TO authenticated USING (true);
 
 -- =============================================================================
+-- 12. TABELA: promo_schedule (Timer de promoção por horário)
+-- =============================================================================
+CREATE TABLE IF NOT EXISTS public.promo_schedule (
+  id         UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  start_time TIME        NOT NULL DEFAULT '12:00:00',
+  end_time   TIME        NOT NULL DEFAULT '16:00:00',
+  active     BOOLEAN     NOT NULL DEFAULT false,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE public.promo_schedule ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "promo_schedule_public_select" ON public.promo_schedule;
+DROP POLICY IF EXISTS "promo_schedule_auth_insert"   ON public.promo_schedule;
+DROP POLICY IF EXISTS "promo_schedule_auth_update"   ON public.promo_schedule;
+
+CREATE POLICY "promo_schedule_public_select"
+  ON public.promo_schedule FOR SELECT USING (true);
+
+CREATE POLICY "promo_schedule_auth_insert"
+  ON public.promo_schedule FOR INSERT TO authenticated WITH CHECK (true);
+
+CREATE POLICY "promo_schedule_auth_update"
+  ON public.promo_schedule FOR UPDATE TO authenticated USING (true) WITH CHECK (true);
+
+INSERT INTO public.promo_schedule (start_time, end_time, active)
+SELECT '12:00:00', '16:00:00', false
+WHERE NOT EXISTS (SELECT 1 FROM public.promo_schedule LIMIT 1);
+
+-- =============================================================================
 -- 8. ÍNDICES DE PERFORMANCE
 -- =============================================================================
 CREATE INDEX IF NOT EXISTS idx_pods_cities       ON public.pods   USING GIN (cities);

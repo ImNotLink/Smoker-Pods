@@ -16,7 +16,11 @@
       "mcp__claude_ai_Supabase__apply_migration",
       "mcp__claude_ai_Supabase__execute_sql",
       "Bash(Get-ChildItem -Path \"d:\\\\VsCode\\\\Smoke Pods\\\\Smoker Pods\" -Directory)",
-      "Bash(Select-Object Name)"
+      "Bash(Select-Object Name)",
+      "Bash(Get-ChildItem -Path \"d:\\\\VsCode\\\\Smoke Pods\\\\Smoker Pods\" -Recurse -Depth 2 -ErrorAction SilentlyContinue)",
+      "Bash(Select-Object FullName, PSIsContainer)",
+      "Bash(ConvertTo-Json)",
+      "Bash(Select-Object -First 100)"
     ]
   }
 }

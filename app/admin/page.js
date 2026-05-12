@@ -362,6 +362,8 @@ export default function AdminPage() {
   const [promoSelectMode, setPromoSelectMode] = useState(false)
   const [selectedPodIds, setSelectedPodIds] = useState(new Set())
   const [bulkPromoSaving, setBulkPromoSaving] = useState(false)
+  const [promoSchedule, setPromoSchedule] = useState({ start_time: '12:00', end_time: '16:00', active: false, id: null })
+  const [scheduleSaving, setScheduleSaving] = useState(false)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -372,6 +374,7 @@ export default function AdminPage() {
         setAdminUser(session.user)
         fetchPods()
         fetchCities()
+        fetchPromoSchedule()
         supabase
           .from('admin_users')
           .select('role')
@@ -406,6 +409,36 @@ export default function AdminPage() {
   async function fetchCities() {
     const { data } = await supabase.from('cities').select('name').eq('active', true).order('name')
     if (data && data.length > 0) setCities(data.map(c => c.name))
+  }
+
+  async function fetchPromoSchedule() {
+    const { data } = await supabase.from('promo_schedule').select('*').limit(1).maybeSingle()
+    if (data) setPromoSchedule({
+      ...data,
+      start_time: data.start_time?.slice(0, 5),
+      end_time: data.end_time?.slice(0, 5),
+    })
+  }
+
+  async function savePromoSchedule() {
+    setScheduleSaving(true)
+    if (promoSchedule.id) {
+      const { error } = await supabase.from('promo_schedule').update({
+        start_time: promoSchedule.start_time,
+        end_time: promoSchedule.end_time,
+        active: promoSchedule.active,
+      }).eq('id', promoSchedule.id)
+      if (error) alert('Erro ao salvar timer: ' + error.message)
+    } else {
+      const { data, error } = await supabase.from('promo_schedule').insert({
+        start_time: promoSchedule.start_time,
+        end_time: promoSchedule.end_time,
+        active: promoSchedule.active,
+      }).select().single()
+      if (error) alert('Erro ao salvar timer: ' + error.message)
+      else if (data) setPromoSchedule({ ...data, start_time: data.start_time?.slice(0, 5), end_time: data.end_time?.slice(0, 5) })
+    }
+    setScheduleSaving(false)
   }
 
   async function fetchOrders() {
@@ -965,6 +998,77 @@ export default function AdminPage() {
                 </div>
               ))}
             </div>
+
+            {/* Promo Timer */}
+            {userRole === 'super_admin' && (
+              <div
+                className="rounded-2xl p-5 mb-6"
+                style={{
+                  background: promoSchedule.active ? 'rgba(245,158,11,0.07)' : 'rgba(255,255,255,0.02)',
+                  border: promoSchedule.active ? '1px solid rgba(245,158,11,0.2)' : '1px solid rgba(255,255,255,0.06)',
+                }}
+              >
+                <div className="flex flex-wrap items-center gap-4">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-bold uppercase tracking-widest mb-0.5"
+                      style={{ color: promoSchedule.active ? '#f59e0b' : 'rgba(255,255,255,0.3)' }}>
+                      ⏰ Timer de Promoção
+                    </p>
+                    <p className="text-white/25 text-xs">
+                      {promoSchedule.active
+                        ? `Promoções visíveis das ${promoSchedule.start_time} às ${promoSchedule.end_time}`
+                        : 'Timer desativado — promoções sem horário fixo'}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <div className="flex items-center gap-2">
+                      <span className="text-white/25 text-xs font-semibold uppercase tracking-widest">Início</span>
+                      <input
+                        type="time"
+                        value={promoSchedule.start_time || '12:00'}
+                        onChange={e => setPromoSchedule(p => ({ ...p, start_time: e.target.value }))}
+                        className="px-3 py-2 rounded-xl text-white text-sm outline-none"
+                        style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}
+                      />
+                    </div>
+                    <span className="text-white/20 text-sm">→</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-white/25 text-xs font-semibold uppercase tracking-widest">Fim</span>
+                      <input
+                        type="time"
+                        value={promoSchedule.end_time || '16:00'}
+                        onChange={e => setPromoSchedule(p => ({ ...p, end_time: e.target.value }))}
+                        className="px-3 py-2 rounded-xl text-white text-sm outline-none"
+                        style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)' }}
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setPromoSchedule(p => ({ ...p, active: !p.active }))}
+                      className="px-4 py-2 rounded-xl text-sm font-semibold transition-all"
+                      style={{
+                        background: promoSchedule.active ? 'rgba(245,158,11,0.15)' : 'rgba(255,255,255,0.05)',
+                        border: promoSchedule.active ? '1px solid rgba(245,158,11,0.4)' : '1px solid rgba(255,255,255,0.08)',
+                        color: promoSchedule.active ? '#f59e0b' : 'rgba(255,255,255,0.35)',
+                      }}
+                    >
+                      {promoSchedule.active ? '⏰ Ativo' : 'Inativo'}
+                    </button>
+                    <button
+                      onClick={savePromoSchedule}
+                      disabled={scheduleSaving}
+                      className="px-4 py-2 rounded-xl text-sm font-bold text-white transition-all hover:brightness-110 active:scale-[0.97] disabled:opacity-40"
+                      style={{
+                        background: 'linear-gradient(135deg, #1d4ed8, #3b82f6)',
+                        boxShadow: '0 0 16px rgba(59,130,246,0.2)',
+                      }}
+                    >
+                      {scheduleSaving ? '...' : 'Salvar'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Search */}
             <input

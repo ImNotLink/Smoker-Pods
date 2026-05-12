@@ -327,14 +327,43 @@ export default function HomePage() {
   const [zoomAlt, setZoomAlt] = useState('')
   const [selectedCity, setSelectedCity] = useState(null)
   const [cities, setCities] = useState(['Buriticupu', 'Imperatriz', 'Rondon do Pará'])
+  const [promoSchedule, setPromoSchedule] = useState(null)
+  const [countdown, setCountdown] = useState(null)
 
   useEffect(() => {
     supabase.from('cities').select('name').eq('active', true).order('name').then(({ data }) => {
       if (data && data.length > 0) setCities(data.map(c => c.name))
     })
+    supabase.from('promo_schedule').select('*').limit(1).maybeSingle().then(({ data }) => {
+      if (data) setPromoSchedule({
+        ...data,
+        start_time: data.start_time?.slice(0, 5),
+        end_time: data.end_time?.slice(0, 5),
+      })
+    })
     const saved = localStorage.getItem('smokepods_city')
     if (saved) setSelectedCity(saved)
   }, [])
+
+  useEffect(() => {
+    if (!promoSchedule?.active) { setCountdown(null); return }
+    function tick() {
+      const now = new Date()
+      const toSec = t => { const [h, m] = (t || '00:00').split(':').map(Number); return h * 3600 + m * 60 }
+      const startSec = toSec(promoSchedule.start_time)
+      const endSec = toSec(promoSchedule.end_time)
+      const nowSec = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds()
+      if (nowSec >= startSec && nowSec < endSec) {
+        const rem = endSec - nowSec
+        setCountdown({ active: true, h: Math.floor(rem / 3600), m: Math.floor((rem % 3600) / 60), s: rem % 60 })
+      } else {
+        setCountdown({ active: false })
+      }
+    }
+    tick()
+    const id = setInterval(tick, 1000)
+    return () => clearInterval(id)
+  }, [promoSchedule])
 
   useEffect(() => {
     if (!selectedCity) return
@@ -368,13 +397,18 @@ export default function HomePage() {
     setCartOpen(true)
   }, [])
 
+  // Promoções visíveis: sempre (sem schedule) ou dentro do horário agendado
+  const promoEnabled = !promoSchedule?.active || countdown?.active === true
+
   // Filtra por cidade + busca + ordenação
-  let filtered = pods.filter(p => {
-    const cityMatch = !selectedCity || !p.cities || p.cities.length === 0 || p.cities.includes(selectedCity)
-    const nameMatch = p.name.toLowerCase().includes(search.toLowerCase())
-    const flavorMatch = flavorSearch === '' || p.flavors.some(f => f.toLowerCase().includes(flavorSearch.toLowerCase()))
-    return cityMatch && nameMatch && flavorMatch
-  })
+  let filtered = pods
+    .map(p => promoEnabled ? p : { ...p, on_sale: false })
+    .filter(p => {
+      const cityMatch = !selectedCity || !p.cities || p.cities.length === 0 || p.cities.includes(selectedCity)
+      const nameMatch = p.name.toLowerCase().includes(search.toLowerCase())
+      const flavorMatch = flavorSearch === '' || p.flavors.some(f => f.toLowerCase().includes(flavorSearch.toLowerCase()))
+      return cityMatch && nameMatch && flavorMatch
+    })
 
   // Esgotados sempre no final; dentro do grupo disponível aplica sortBy
   filtered = [...filtered].sort((a, b) => {
@@ -446,6 +480,37 @@ export default function HomePage() {
           </button>
         </div>
       </header>
+
+      {/* Banner Timer de Promoção */}
+      {promoSchedule?.active && countdown && (
+        <div style={{
+          background: countdown.active
+            ? 'linear-gradient(90deg, rgba(245,158,11,0.13), rgba(239,68,68,0.07))'
+            : 'rgba(255,255,255,0.02)',
+          borderBottom: countdown.active
+            ? '1px solid rgba(245,158,11,0.22)'
+            : '1px solid rgba(255,255,255,0.05)',
+        }}>
+          <div className="max-w-screen-xl mx-auto px-4 sm:px-6 py-2.5 flex items-center justify-center flex-wrap gap-2 sm:gap-3">
+            {countdown.active ? (
+              <>
+                <span className="text-amber-400 font-bold text-sm">🔥 PROMOÇÃO ATIVA</span>
+                <span className="text-white/20 hidden sm:inline">•</span>
+                <span className="text-white/40 text-xs">termina às {promoSchedule.end_time}</span>
+                <span className="text-white/20">•</span>
+                <span className="font-mono font-black text-lg text-amber-300 tracking-widest">
+                  {String(countdown.h).padStart(2, '0')}:{String(countdown.m).padStart(2, '0')}:{String(countdown.s).padStart(2, '0')}
+                </span>
+                <span className="text-white/30 text-xs">restantes</span>
+              </>
+            ) : (
+              <span className="text-white/20 text-xs py-0.5">
+                ⏸ Próxima promoção: {promoSchedule.start_time} – {promoSchedule.end_time}
+              </span>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Filtros */}
       <div className="px-4 sm:px-6 pt-5 pb-3 max-w-screen-xl mx-auto">
