@@ -334,15 +334,28 @@ export default function HomePage() {
     supabase.from('cities').select('name').eq('active', true).order('name').then(({ data }) => {
       if (data && data.length > 0) setCities(data.map(c => c.name))
     })
-    supabase.from('promo_schedule').select('*').limit(1).maybeSingle().then(({ data }) => {
+
+    function applySchedule(data) {
       if (data) setPromoSchedule({
         ...data,
         start_time: data.start_time?.slice(0, 5),
         end_time: data.end_time?.slice(0, 5),
       })
-    })
+    }
+
+    supabase.from('promo_schedule').select('*').limit(1).maybeSingle().then(({ data }) => applySchedule(data))
+
+    const scheduleChannel = supabase
+      .channel('promo-schedule-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'promo_schedule' }, () => {
+        supabase.from('promo_schedule').select('*').limit(1).maybeSingle().then(({ data }) => applySchedule(data))
+      })
+      .subscribe()
+
     const saved = localStorage.getItem('smokepods_city')
     if (saved) setSelectedCity(saved)
+
+    return () => supabase.removeChannel(scheduleChannel)
   }, [])
 
   useEffect(() => {
