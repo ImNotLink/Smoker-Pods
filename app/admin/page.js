@@ -359,6 +359,9 @@ export default function AdminPage() {
   const [showNewReposicao, setShowNewReposicao] = useState(false)
   const [reposicaoLoading, setReposicaoLoading] = useState(false)
   const [delReposicaoTarget, setDelReposicaoTarget] = useState(null)
+  const [promoSelectMode, setPromoSelectMode] = useState(false)
+  const [selectedPodIds, setSelectedPodIds] = useState(new Set())
+  const [bulkPromoSaving, setBulkPromoSaving] = useState(false)
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -595,6 +598,36 @@ export default function AdminPage() {
     const { error } = await supabase.from('admin_users').delete().eq('email', email)
     if (error) alert('Erro ao remover: ' + error.message)
     else fetchAdminUsers()
+  }
+
+  async function bulkSetPromo(activate) {
+    if (selectedPodIds.size === 0) return
+    setBulkPromoSaving(true)
+    const ids = Array.from(selectedPodIds)
+    const { error } = await supabase.from('pods').update({ on_sale: activate }).in('id', ids)
+    if (error) alert('Erro ao atualizar promoções: ' + error.message)
+    else {
+      setPods(prev => prev.map(p => selectedPodIds.has(p.id) ? { ...p, on_sale: activate } : p))
+      setSelectedPodIds(new Set())
+      setPromoSelectMode(false)
+    }
+    setBulkPromoSaving(false)
+  }
+
+  function toggleSelectPod(id) {
+    setSelectedPodIds(prev => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
+  }
+
+  function toggleSelectAll() {
+    if (selectedPodIds.size === filtered.length) {
+      setSelectedPodIds(new Set())
+    } else {
+      setSelectedPodIds(new Set(filtered.map(p => p.id)))
+    }
   }
 
   const superAdminTabs = ['orders', 'sales', 'reposicao', 'team']
@@ -857,17 +890,67 @@ export default function AdminPage() {
                 <h1 className="text-white text-2xl font-black tracking-tight">Produtos</h1>
                 <p className="text-white/30 text-sm mt-0.5">Gerencie o catálogo de {activeCity}</p>
               </div>
-              <button
-                onClick={() => setEditTarget(EMPTY)}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-white text-sm transition-all hover:brightness-110 active:scale-[0.97]"
-                style={{
-                  background: 'linear-gradient(135deg, #1d4ed8, #3b82f6)',
-                  boxShadow: '0 0 20px rgba(59,130,246,0.3)',
-                }}
-              >
-                <I.Plus /> Novo Produto
-              </button>
+              <div className="flex items-center gap-2">
+                {userRole === 'super_admin' && (
+                  <button
+                    onClick={() => { setPromoSelectMode(v => !v); setSelectedPodIds(new Set()) }}
+                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-sm transition-all hover:brightness-110 active:scale-[0.97]"
+                    style={promoSelectMode
+                      ? { background: 'rgba(245,158,11,0.15)', border: '1px solid rgba(245,158,11,0.4)', color: '#f59e0b' }
+                      : { background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.5)' }
+                    }
+                  >
+                    🏷️ {promoSelectMode ? 'Cancelar' : 'Promoções em Massa'}
+                  </button>
+                )}
+                <button
+                  onClick={() => setEditTarget(EMPTY)}
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-white text-sm transition-all hover:brightness-110 active:scale-[0.97]"
+                  style={{
+                    background: 'linear-gradient(135deg, #1d4ed8, #3b82f6)',
+                    boxShadow: '0 0 20px rgba(59,130,246,0.3)',
+                  }}
+                >
+                  <I.Plus /> Novo Produto
+                </button>
+              </div>
             </div>
+
+            {/* Bulk promo action bar */}
+            {promoSelectMode && (
+              <div
+                className="flex flex-wrap items-center gap-3 px-5 py-3.5 rounded-2xl mb-5"
+                style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)' }}
+              >
+                <span className="text-amber-400 text-sm font-semibold flex-1">
+                  {selectedPodIds.size === 0
+                    ? 'Selecione os produtos para alterar a promoção'
+                    : `${selectedPodIds.size} produto${selectedPodIds.size > 1 ? 's' : ''} selecionado${selectedPodIds.size > 1 ? 's' : ''}`}
+                </span>
+                <button
+                  onClick={toggleSelectAll}
+                  className="px-3 py-1.5 rounded-lg text-xs font-semibold text-white/50 hover:text-white border border-white/[0.08] transition-all"
+                >
+                  {selectedPodIds.size === filtered.length && filtered.length > 0 ? 'Desmarcar todos' : 'Selecionar todos'}
+                </button>
+                <button
+                  disabled={selectedPodIds.size === 0 || bulkPromoSaving}
+                  onClick={() => bulkSetPromo(true)}
+                  className="px-4 py-1.5 rounded-lg text-xs font-bold transition-all disabled:opacity-40"
+                  style={{ background: 'rgba(34,197,94,0.15)', border: '1px solid rgba(34,197,94,0.3)', color: '#22c55e' }}
+                >
+                  {bulkPromoSaving ? '...' : '✓ Ativar Promoção'}
+                </button>
+                <button
+                  disabled={selectedPodIds.size === 0 || bulkPromoSaving}
+                  onClick={() => bulkSetPromo(false)}
+                  className="px-4 py-1.5 rounded-lg text-xs font-bold transition-all disabled:opacity-40"
+                  style={{ background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.3)', color: '#ef4444' }}
+                >
+                  {bulkPromoSaving ? '...' : '✕ Desativar Promoção'}
+                </button>
+              </div>
+            )}
 
             {/* Stats */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
@@ -907,6 +990,16 @@ export default function AdminPage() {
                 <table className="w-full text-sm min-w-[600px]">
                   <thead>
                     <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.02)' }}>
+                      {promoSelectMode && (
+                        <th className="pl-5 py-3.5 w-10">
+                          <input
+                            type="checkbox"
+                            checked={filtered.length > 0 && selectedPodIds.size === filtered.length}
+                            onChange={toggleSelectAll}
+                            className="w-4 h-4 accent-amber-400 cursor-pointer"
+                          />
+                        </th>
+                      )}
                       {['Produto', 'Sabores', 'Preço', 'Promo', 'Estoque', 'Ações'].map((h) => (
                         <th key={h} className="text-left px-5 py-3.5 text-white/25 text-xs font-semibold uppercase tracking-wider">
                           {h}
@@ -917,7 +1010,7 @@ export default function AdminPage() {
                   <tbody>
                     {filtered.length === 0 ? (
                       <tr>
-                        <td colSpan={6} className="text-center text-white/20 py-12 text-sm">
+                        <td colSpan={promoSelectMode ? 7 : 6} className="text-center text-white/20 py-12 text-sm">
                           Nenhum produto em {activeCity}.
                         </td>
                       </tr>
@@ -925,8 +1018,23 @@ export default function AdminPage() {
                       <tr
                         key={pod.id}
                         className="transition-colors hover:bg-white/[0.015]"
-                        style={{ borderBottom: idx < filtered.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}
+                        style={{
+                          borderBottom: idx < filtered.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none',
+                          background: selectedPodIds.has(pod.id) ? 'rgba(245,158,11,0.06)' : undefined,
+                          cursor: promoSelectMode ? 'pointer' : undefined,
+                        }}
+                        onClick={promoSelectMode ? () => toggleSelectPod(pod.id) : undefined}
                       >
+                        {promoSelectMode && (
+                          <td className="pl-5 py-4 w-10" onClick={e => e.stopPropagation()}>
+                            <input
+                              type="checkbox"
+                              checked={selectedPodIds.has(pod.id)}
+                              onChange={() => toggleSelectPod(pod.id)}
+                              className="w-4 h-4 accent-amber-400 cursor-pointer"
+                            />
+                          </td>
+                        )}
                         {/* Product */}
                         <td className="px-5 py-4">
                           <div className="flex items-center gap-3">

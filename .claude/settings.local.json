@@ -14,7 +14,9 @@
       "Bash(Select-Object -ExpandProperty FullName)",
       "mcp__claude_ai_Supabase__list_projects",
       "mcp__claude_ai_Supabase__apply_migration",
-      "mcp__claude_ai_Supabase__execute_sql"
+      "mcp__claude_ai_Supabase__execute_sql",
+      "Bash(Get-ChildItem -Path \"d:\\\\VsCode\\\\Smoke Pods\\\\Smoker Pods\" -Directory)",
+      "Bash(Select-Object Name)"
     ]
   }
 }
