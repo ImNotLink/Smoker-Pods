@@ -444,6 +444,12 @@ export default function HomePage() {
 
   const cartCount = cartItems.reduce((s, i) => s + i.qty, 0)
 
+  const _toSec = t => { const [h, m] = (t || '00:00').split(':').map(Number); return h * 3600 + m * 60 }
+  const promoTotalSec = promoSchedule ? _toSec(promoSchedule.end_time) - _toSec(promoSchedule.start_time) : 0
+  const promoRemainSec = countdown?.active ? countdown.h * 3600 + countdown.m * 60 + countdown.s : 0
+  const promoProgress = promoTotalSec > 0 ? ((promoTotalSec - promoRemainSec) / promoTotalSec) * 100 : 0
+  const promoUrgent = countdown?.active && countdown.h === 0 && countdown.m < 30
+
   const sortOptions = [
     { value: 'newest', label: '🕐 Mais Recentes' },
     { value: 'price_asc', label: '💲 Menor Preço' },
@@ -497,18 +503,69 @@ export default function HomePage() {
       {/* Banner Timer de Promoção */}
       {promoSchedule?.active && countdown?.active && (
         <div style={{
-          background: 'linear-gradient(90deg, rgba(245,158,11,0.13), rgba(239,68,68,0.07))',
-          borderBottom: '1px solid rgba(245,158,11,0.22)',
+          background: promoUrgent
+            ? 'linear-gradient(90deg, rgba(239,68,68,0.14), rgba(220,38,38,0.07))'
+            : 'linear-gradient(90deg, rgba(245,158,11,0.12), rgba(239,68,68,0.06))',
+          borderBottom: promoUrgent
+            ? '1px solid rgba(239,68,68,0.28)'
+            : '1px solid rgba(245,158,11,0.2)',
+          position: 'relative',
+          overflow: 'hidden',
         }}>
-          <div className="max-w-screen-xl mx-auto px-4 sm:px-6 py-2.5 flex items-center justify-center flex-wrap gap-2 sm:gap-3">
-            <span className="text-amber-400 font-bold text-sm">🔥 PROMOÇÃO ATIVA</span>
-            <span className="text-white/20 hidden sm:inline">•</span>
-            <span className="text-white/40 text-xs">termina às {promoSchedule.end_time}</span>
-            <span className="text-white/20">•</span>
-            <span className="font-mono font-black text-lg text-amber-300 tracking-widest">
-              {String(countdown.h).padStart(2, '0')}:{String(countdown.m).padStart(2, '0')}:{String(countdown.s).padStart(2, '0')}
+
+          {/* Barra de progresso (fundo, esgotando da direita para esquerda) */}
+          <div style={{
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            height: '2px',
+            width: `${100 - promoProgress}%`,
+            background: promoUrgent
+              ? 'linear-gradient(90deg, #ef4444, #dc2626)'
+              : 'linear-gradient(90deg, #f59e0b, #ef4444)',
+            transition: 'width 1s linear',
+          }} />
+
+          <div className="max-w-screen-xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-center flex-wrap gap-3 sm:gap-5">
+
+            {/* Label */}
+            <span className={`font-bold text-sm ${promoUrgent ? 'animate-pulse text-red-400' : 'text-amber-400'}`}>
+              🔥 PROMOÇÃO ATIVA
             </span>
-            <span className="text-white/30 text-xs">restantes</span>
+
+            <span className="text-white/10 hidden sm:inline">|</span>
+
+            {/* Blocos de dígitos */}
+            {[
+              { val: countdown.h, label: 'h' },
+              { val: countdown.m, label: 'm' },
+              { val: countdown.s, label: 's' },
+            ].map(({ val, label }, gi) => (
+              <div key={label} className="flex items-end gap-1">
+                <div className="flex gap-0.5">
+                  {String(val).padStart(2, '0').split('').map((d, i) => (
+                    <span key={i}
+                      className="font-mono font-black text-base flex items-center justify-center rounded-lg"
+                      style={{
+                        width: '28px', height: '34px',
+                        background: promoUrgent ? 'rgba(239,68,68,0.18)' : 'rgba(245,158,11,0.13)',
+                        border: promoUrgent ? '1px solid rgba(239,68,68,0.3)' : '1px solid rgba(245,158,11,0.25)',
+                        color: promoUrgent ? '#f87171' : '#fcd34d',
+                      }}>
+                      {d}
+                    </span>
+                  ))}
+                </div>
+                <span className="text-white/25 text-[10px] font-bold mb-0.5">{label}</span>
+                {gi < 2 && (
+                  <span className="font-black text-xl ml-0.5 mb-0.5"
+                    style={{ color: promoUrgent ? 'rgba(248,113,113,0.5)' : 'rgba(252,211,77,0.4)' }}>:</span>
+                )}
+              </div>
+            ))}
+
+            <span className="text-white/10 hidden sm:inline">|</span>
+            <span className="text-white/30 text-xs">termina às {promoSchedule.end_time}</span>
           </div>
         </div>
       )}
