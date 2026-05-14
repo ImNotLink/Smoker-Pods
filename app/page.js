@@ -590,7 +590,7 @@ export default function HomePage() {
 
             {/* Label */}
             <span className={`font-bold text-sm ${promoUrgent ? 'animate-pulse text-red-400' : 'text-amber-400'}`}>
-              🔥 PROMOÇÃO ATIVA
+              🔥 PROMOÇÃO 🔥
             </span>
 
             <span className="text-white/10 hidden sm:inline">|</span>
