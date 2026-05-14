@@ -399,19 +399,41 @@ export default function HomePage() {
 
   useEffect(() => {
     if (!promoSchedule?.active) { setCountdown(null); return }
+
+    const toSec = t => { const [h, m] = (t || '00:00').split(':').map(Number); return h * 3600 + m * 60 }
+    let wasActive = null  // null = desconhecido (primeira execução)
+    let disabled = false  // evita chamadas repetidas ao RPC
+
+    async function disablePromos() {
+      if (disabled) return
+      disabled = true
+      await supabase.rpc('disable_expired_promos')
+      const { data } = await supabase.from('pods').select('*').order('created_at', { ascending: false })
+      if (data) setPods(data)
+    }
+
     function tick() {
       const now = new Date()
-      const toSec = t => { const [h, m] = (t || '00:00').split(':').map(Number); return h * 3600 + m * 60 }
       const startSec = toSec(promoSchedule.start_time)
       const endSec = toSec(promoSchedule.end_time)
       const nowSec = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds()
+
       if (nowSec >= startSec && nowSec < endSec) {
+        wasActive = true
+        disabled = false  // reseta para a próxima expiração
         const rem = endSec - nowSec
         setCountdown({ active: true, h: Math.floor(rem / 3600), m: Math.floor((rem % 3600) / 60), s: rem % 60 })
       } else {
+        // Dispara só quando transiciona de ativo → inativo (timer acabou durante a sessão)
+        // ou quando a página é aberta já com o timer expirado (nowSec >= endSec)
+        if (wasActive === true || (wasActive === null && nowSec >= endSec)) {
+          disablePromos()
+        }
+        wasActive = false
         setCountdown({ active: false })
       }
     }
+
     tick()
     const id = setInterval(tick, 1000)
     return () => clearInterval(id)
